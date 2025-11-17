@@ -1,4 +1,5 @@
 import { useWalletStore } from "@/stores/walletStore";
+import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -34,8 +35,9 @@ const Portfolio = () => {
   const sortedTokens = [...filteredTokens].sort((a, b) => b.usdValue - a.usdValue);
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="container mx-auto max-w-7xl">
+    <Layout>
+      <div className="min-h-screen bg-background p-6">
+        <div className="container mx-auto max-w-7xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Portfolio</h1>
           <p className="text-muted-foreground">All your tokens across connected wallets</p>
@@ -113,8 +115,9 @@ const Portfolio = () => {
             ))}
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

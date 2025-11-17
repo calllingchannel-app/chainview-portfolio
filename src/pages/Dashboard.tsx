@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { useWalletStore } from "@/stores/walletStore";
+import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { ConnectWalletDialog } from "@/components/wallet/ConnectWalletDialog";
 import { WalletCard } from "@/components/wallet/WalletCard";
-import { formatCurrency } from "@/lib/utils";
+import { getAllChainBalances } from "@/lib/blockchainService";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
-  const { connectedWallets, totalPortfolioUSD, isLoading, lastUpdated } = useWalletStore();
+  const { connectedWallets, totalPortfolioUSD, isLoading, lastUpdated, updateWalletBalances, setLoading } = useWalletStore();
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [portfolioChange24h, setPortfolioChange24h] = useState(0);
+  const { toast } = useToast();
 
   // Calculate total portfolio value
   useEffect(() => {
@@ -25,14 +28,61 @@ const Dashboard = () => {
     }
   }, [totalPortfolioUSD]);
 
-  const handleRefresh = () => {
-    useWalletStore.getState().setLastUpdated(Date.now());
-    // In production, this would trigger balance refresh
+  // Auto-refresh balances every 30 seconds
+  useEffect(() => {
+    const refreshBalances = async () => {
+      if (connectedWallets.length === 0) return;
+      
+      setLoading(true);
+      for (const wallet of connectedWallets) {
+        try {
+          const balances = await getAllChainBalances(wallet.address, wallet.type);
+          updateWalletBalances(wallet.id, balances);
+        } catch (error) {
+          console.error(`Error refreshing ${wallet.name}:`, error);
+        }
+      }
+      setLoading(false);
+    };
+
+    const interval = setInterval(refreshBalances, 30000);
+    return () => clearInterval(interval);
+  }, [connectedWallets, updateWalletBalances, setLoading]);
+
+  const handleRefresh = async () => {
+    if (connectedWallets.length === 0) return;
+    
+    setLoading(true);
+    toast({
+      title: "Refreshing Balances",
+      description: "Fetching latest wallet data...",
+    });
+
+    try {
+      for (const wallet of connectedWallets) {
+        const balances = await getAllChainBalances(wallet.address, wallet.type);
+        updateWalletBalances(wallet.id, balances);
+      }
+      
+      toast({
+        title: "Balances Updated",
+        description: "Your wallet balances have been refreshed",
+      });
+    } catch (error) {
+      toast({
+        title: "Refresh Failed",
+        description: "Failed to refresh balances. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="container mx-auto max-w-7xl">
+    <Layout>
+      <div className="min-h-screen bg-background p-6">
+        <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
@@ -123,8 +173,9 @@ const Dashboard = () => {
         )}
       </div>
 
-      <ConnectWalletDialog open={showConnectDialog} onOpenChange={setShowConnectDialog} />
-    </div>
+        <ConnectWalletDialog open={showConnectDialog} onOpenChange={setShowConnectDialog} />
+      </div>
+    </Layout>
   );
 };
 
