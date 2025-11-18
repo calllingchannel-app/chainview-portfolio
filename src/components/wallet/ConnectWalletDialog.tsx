@@ -51,6 +51,36 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         const balances = await getAllChainBalances(accounts[0], 'evm');
         console.log('Fetched balances:', balances);
         
+        // Fetch prices for all tokens
+        if (balances.length > 0) {
+          const { fetchPricesByIds } = await import('@/lib/priceService');
+          const { NATIVE_COINGECKO_IDS } = await import('@/lib/tokenLists');
+          
+          // Collect all unique coingecko IDs
+          const coingeckoIds = new Set<string>();
+          balances.forEach((token) => {
+            // Add native token coingecko ID
+            if (!token.contractAddress) {
+              const nativeId = NATIVE_COINGECKO_IDS[token.chain];
+              if (nativeId) coingeckoIds.add(nativeId);
+            }
+          });
+          
+          // Fetch prices
+          const prices = await fetchPricesByIds(Array.from(coingeckoIds));
+          
+          // Update balances with USD values
+          balances.forEach((token) => {
+            if (!token.contractAddress) {
+              const nativeId = NATIVE_COINGECKO_IDS[token.chain];
+              if (nativeId && prices[nativeId]) {
+                token.priceUsd = prices[nativeId];
+                token.usdValue = parseFloat(token.balance) * prices[nativeId];
+              }
+            }
+          });
+        }
+        
         const totalValue = balances.reduce((sum, b) => sum + b.usdValue, 0);
         console.log('Total USD Value:', totalValue);
         
@@ -70,7 +100,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         
         toast({
           title: "Wallet Connected",
-          description: `${walletName} connected with ${balances.length} tokens found`,
+          description: `${walletName} connected with ${balances.length} tokens found (${totalValue.toFixed(2)} USD)`,
         });
         
         onOpenChange(false);
@@ -115,6 +145,20 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         const balances = await getAllChainBalances(address, 'solana');
         console.log('Fetched Solana balances:', balances);
         
+        // Fetch SOL price
+        if (balances.length > 0) {
+          const { fetchPricesByIds } = await import('@/lib/priceService');
+          const prices = await fetchPricesByIds(['solana']);
+          
+          // Update balances with USD values
+          balances.forEach((token) => {
+            if (token.symbol === 'SOL' && prices['solana']) {
+              token.priceUsd = prices['solana'];
+              token.usdValue = parseFloat(token.balance) * prices['solana'];
+            }
+          });
+        }
+        
         const totalValue = balances.reduce((sum, b) => sum + b.usdValue, 0);
         console.log('Total USD Value:', totalValue);
         
@@ -134,7 +178,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         
         toast({
           title: "Wallet Connected",
-          description: `${walletName} connected with ${balances.length} tokens found`,
+          description: `${walletName} connected with ${balances.length} tokens found (${totalValue.toFixed(2)} USD)`,
         });
         
         onOpenChange(false);
