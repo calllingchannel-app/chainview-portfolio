@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useWalletStore } from '@/stores/walletStore';
 import { getAllChainBalances } from '@/lib/blockchainService';
 import { fetchPricesByIds } from '@/lib/priceService';
-import { NATIVE_COINGECKO_IDS } from '@/lib/tokenLists';
+import { NATIVE_COINGECKO_IDS, EVM_TOKENS, SOLANA_TOKENS } from '@/lib/tokenLists';
 
 export function useBalanceRefresh(intervalMs: number = 15000) {
   const { connectedWallets, updateWalletBalances, setTotalPortfolioUSD, setLastUpdated } = useWalletStore();
@@ -27,6 +27,13 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
               if (!token.contractAddress) {
                 const nativeId = NATIVE_COINGECKO_IDS[token.chain];
                 if (nativeId) coingeckoIds.add(nativeId);
+              } else if (token.chain === 'solana') {
+                const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
+                if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
+              } else {
+                const list = (EVM_TOKENS as any)[token.chain] as Array<any> | undefined;
+                const info = list?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
+                if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
               }
             });
 
@@ -39,6 +46,19 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
                 if (nativeId && prices[nativeId]) {
                   token.priceUsd = prices[nativeId];
                   token.usdValue = parseFloat(token.balance) * prices[nativeId];
+                }
+              } else if (token.chain === 'solana') {
+                const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
+                if (info?.coingeckoId && prices[info.coingeckoId]) {
+                  token.priceUsd = prices[info.coingeckoId];
+                  token.usdValue = parseFloat(token.balance) * prices[info.coingeckoId];
+                }
+              } else {
+                const list = (EVM_TOKENS as any)[token.chain] as Array<any> | undefined;
+                const info = list?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
+                if (info?.coingeckoId && prices[info.coingeckoId]) {
+                  token.priceUsd = prices[info.coingeckoId];
+                  token.usdValue = parseFloat(token.balance) * prices[info.coingeckoId];
                 }
               }
             });
