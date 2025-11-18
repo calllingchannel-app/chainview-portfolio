@@ -54,15 +54,18 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         // Fetch prices for all tokens
         if (balances.length > 0) {
           const { fetchPricesByIds } = await import('@/lib/priceService');
-          const { NATIVE_COINGECKO_IDS } = await import('@/lib/tokenLists');
+          const { NATIVE_COINGECKO_IDS, EVM_TOKENS } = await import('@/lib/tokenLists');
           
           // Collect all unique coingecko IDs
           const coingeckoIds = new Set<string>();
           balances.forEach((token) => {
-            // Add native token coingecko ID
             if (!token.contractAddress) {
               const nativeId = NATIVE_COINGECKO_IDS[token.chain];
               if (nativeId) coingeckoIds.add(nativeId);
+            } else {
+              const list = (EVM_TOKENS as any)[token.chain] as Array<any> | undefined;
+              const info = list?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
+              if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
             }
           });
           
@@ -76,6 +79,13 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
               if (nativeId && prices[nativeId]) {
                 token.priceUsd = prices[nativeId];
                 token.usdValue = parseFloat(token.balance) * prices[nativeId];
+              }
+            } else {
+              const list = (EVM_TOKENS as any)[token.chain] as Array<any> | undefined;
+              const info = list?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
+              if (info?.coingeckoId && prices[info.coingeckoId]) {
+                token.priceUsd = prices[info.coingeckoId];
+                token.usdValue = parseFloat(token.balance) * prices[info.coingeckoId];
               }
             }
           });
@@ -145,16 +155,31 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         const balances = await getAllChainBalances(address, 'solana');
         console.log('Fetched Solana balances:', balances);
         
-        // Fetch SOL price
+        // Fetch SOL and SPL token prices
         if (balances.length > 0) {
           const { fetchPricesByIds } = await import('@/lib/priceService');
-          const prices = await fetchPricesByIds(['solana']);
-          
-          // Update balances with USD values
+          const { SOLANA_TOKENS } = await import('@/lib/tokenLists');
+
+          const coingeckoIds = new Set<string>(['solana']);
+          balances.forEach((token) => {
+            if (token.chain === 'solana' && token.contractAddress) {
+              const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
+              if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
+            }
+          });
+
+          const prices = await fetchPricesByIds(Array.from(coingeckoIds));
+
           balances.forEach((token) => {
             if (token.symbol === 'SOL' && prices['solana']) {
               token.priceUsd = prices['solana'];
               token.usdValue = parseFloat(token.balance) * prices['solana'];
+            } else if (token.chain === 'solana' && token.contractAddress) {
+              const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
+              if (info?.coingeckoId && prices[info.coingeckoId]) {
+                token.priceUsd = prices[info.coingeckoId];
+                token.usdValue = parseFloat(token.balance) * prices[info.coingeckoId];
+              }
             }
           });
         }

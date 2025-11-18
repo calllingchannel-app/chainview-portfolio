@@ -30,9 +30,28 @@ function createClient(chainName: keyof typeof CHAINS) {
   });
 }
 
-// Solana connection with fallback to public RPC
-const SOLANA_RPC = import.meta.env.VITE_HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com';
-const solanaConnection = new Connection(SOLANA_RPC, { commitment: 'confirmed' });
+// Solana RPC with resilient fallback
+const SOLANA_RPC_CANDIDATES: string[] = [
+  // Prefer Helius if provided (accept both VITE_ and non-prefixed env for safety)
+  (import.meta as any).env?.VITE_HELIUS_RPC_URL || (import.meta as any).env?.HELIUS_RPC_URL || '',
+  'https://api.mainnet-beta.solana.com',
+  'https://rpc.ankr.com/solana',
+].filter(Boolean);
+
+async function withSolanaConnection<T>(fn: (conn: Connection) => Promise<T>): Promise<T> {
+  let lastError: any;
+  for (const url of SOLANA_RPC_CANDIDATES) {
+    try {
+      const conn = new Connection(url, { commitment: 'confirmed' });
+      return await fn(conn);
+    } catch (err) {
+      lastError = err;
+      console.warn(`Solana RPC failed for ${url}`, err);
+      continue;
+    }
+  }
+  throw lastError;
+}
 
 // Get native balance for EVM chains
 export async function getNativeBalance(
@@ -138,7 +157,7 @@ export async function getAllEvmBalances(
 export async function getSolanaNative(address: string): Promise<bigint> {
   try {
     const publicKey = new PublicKey(address);
-    const balance = await solanaConnection.getBalance(publicKey);
+    const balance = await withSolanaConnection((conn) => conn.getBalance(publicKey));
     return BigInt(balance);
   } catch (error) {
     console.error('Failed to get Solana native balance:', error);
@@ -155,9 +174,11 @@ export async function getSolanaSPLBalances(
 
   try {
     const publicKey = new PublicKey(address);
-    const tokenAccounts = await solanaConnection.getParsedTokenAccountsByOwner(publicKey, {
-      programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
-    });
+    const tokenAccounts = await withSolanaConnection((conn) =>
+      conn.getParsedTokenAccountsByOwner(publicKey, {
+        programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
+      })
+    );
 
     tokenAccounts.value.forEach((accountInfo) => {
       const parsedInfo = accountInfo.account.data.parsed.info;
