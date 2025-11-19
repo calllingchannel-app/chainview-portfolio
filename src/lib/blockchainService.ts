@@ -42,15 +42,19 @@ async function withSolanaConnection<T>(fn: (conn: Connection) => Promise<T>): Pr
   let lastError: any;
   for (const url of SOLANA_RPC_CANDIDATES) {
     try {
+      console.log(`Attempting Solana RPC: ${url.substring(0, 30)}...`);
       const conn = new Connection(url, { commitment: 'confirmed' });
-      return await fn(conn);
+      const result = await fn(conn);
+      console.log(`✅ Solana RPC success: ${url.substring(0, 30)}...`);
+      return result;
     } catch (err) {
       lastError = err;
-      console.warn(`Solana RPC failed for ${url}`, err);
+      console.warn(`❌ Solana RPC failed for ${url.substring(0, 30)}...`, err);
       continue;
     }
   }
-  throw lastError;
+  console.error('🚨 All Solana RPC endpoints failed. Last error:', lastError);
+  throw new Error(`All Solana RPC endpoints failed. Last error: ${lastError?.message || 'Unknown error'}`);
 }
 
 // Get native balance for EVM chains
@@ -125,21 +129,21 @@ export async function getAllEvmBalances(
   const balances: TokenBalance[] = [];
 
   try {
-    // Get native balance
+    // Get native balance - ALWAYS include it, even if 0
     const nativeBalance = await getNativeBalance(chainName, address);
+    const formatted = formatUnits(nativeBalance, 18);
     
-    if (nativeBalance > 0n) {
-      const formatted = formatUnits(nativeBalance, 18);
-      balances.push({
-        symbol: chainName === 'bsc' ? 'BNB' : chainName === 'polygon' ? 'MATIC' : chainName === 'avalanche' ? 'AVAX' : 'ETH',
-        name: chainName === 'bsc' ? 'BNB' : chainName === 'polygon' ? 'Polygon' : chainName === 'avalanche' ? 'Avalanche' : 'Ethereum',
-        balance: formatted,
-        decimals: 18,
-        usdValue: 0,
-        priceUsd: 0,
-        chain: chainName,
-      });
-    }
+    console.log(`Native balance for ${chainName} ${address}: ${formatted}`);
+    
+    balances.push({
+      symbol: chainName === 'bsc' ? 'BNB' : chainName === 'polygon' ? 'MATIC' : chainName === 'avalanche' ? 'AVAX' : 'ETH',
+      name: chainName === 'bsc' ? 'BNB' : chainName === 'polygon' ? 'Polygon' : chainName === 'avalanche' ? 'Avalanche' : 'Ethereum',
+      balance: formatted,
+      decimals: 18,
+      usdValue: 0,
+      priceUsd: 0,
+      chain: chainName,
+    });
 
     // Get token balances
     const tokens = EVM_TOKENS[chainName] || [];
@@ -158,10 +162,11 @@ export async function getSolanaNative(address: string): Promise<bigint> {
   try {
     const publicKey = new PublicKey(address);
     const balance = await withSolanaConnection((conn) => conn.getBalance(publicKey));
+    console.log(`Raw Solana balance for ${address}: ${balance} lamports`);
     return BigInt(balance);
   } catch (error) {
     console.error('Failed to get Solana native balance:', error);
-    return 0n;
+    throw error; // Re-throw to be handled by caller
   }
 }
 
@@ -215,28 +220,39 @@ export async function getAllSolanaBalances(address: string): Promise<TokenBalanc
   const balances: TokenBalance[] = [];
 
   try {
-    // Get native SOL balance
+    // Get native SOL balance - ALWAYS include it, even if 0
     const nativeBalance = await getSolanaNative(address);
+    const formatted = formatUnits(nativeBalance, 9);
     
-    if (nativeBalance > 0n) {
-      const formatted = formatUnits(nativeBalance, 9);
-      balances.push({
-        symbol: 'SOL',
-        name: 'Solana',
-        balance: formatted,
-        decimals: 9,
-        usdValue: 0,
-        priceUsd: 0,
-        chain: 'solana',
-      });
-    }
+    console.log(`SOL native balance for ${address}: ${formatted} SOL`);
+    
+    balances.push({
+      symbol: 'SOL',
+      name: 'Solana',
+      balance: formatted,
+      decimals: 9,
+      usdValue: 0,
+      priceUsd: 0,
+      chain: 'solana',
+    });
 
     // Get SPL token balances
     const splBalances = await getSolanaSPLBalances(address, SOLANA_TOKENS);
+    console.log(`Found ${splBalances.length} SPL tokens for ${address}`);
     balances.push(...splBalances);
 
   } catch (error) {
     console.error('Failed to get Solana balances:', error);
+    // Still return SOL with 0 balance if RPC fails
+    balances.push({
+      symbol: 'SOL',
+      name: 'Solana',
+      balance: '0',
+      decimals: 9,
+      usdValue: 0,
+      priceUsd: 0,
+      chain: 'solana',
+    });
   }
 
   return balances;
