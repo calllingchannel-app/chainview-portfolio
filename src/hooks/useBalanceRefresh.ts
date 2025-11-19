@@ -11,32 +11,34 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
   const refreshAllWallets = async () => {
     if (connectedWallets.length === 0) return;
 
-    console.log('Refreshing balances for all wallets...');
+    console.log('🔄 Refreshing balances for', connectedWallets.length, 'wallet(s)...');
 
     try {
       // Refresh each wallet in parallel
       const refreshPromises = connectedWallets.map(async (wallet) => {
         try {
+          console.log(`Fetching balances for wallet ${wallet.id} (${wallet.type})...`);
           const balances = await getAllChainBalances(wallet.address, wallet.type);
+          console.log(`Got ${balances.length} token(s) for wallet ${wallet.id}`);
 
-          // Fetch prices
-          if (balances.length > 0) {
-            const coingeckoIds = new Set<string>();
-            
-            balances.forEach((token) => {
-              if (!token.contractAddress) {
-                const nativeId = NATIVE_COINGECKO_IDS[token.chain];
-                if (nativeId) coingeckoIds.add(nativeId);
-              } else if (token.chain === 'solana') {
-                const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
-                if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
-              } else {
-                const list = (EVM_TOKENS as any)[token.chain] as Array<any> | undefined;
-                const info = list?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
-                if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
-              }
-            });
+          // ALWAYS fetch prices, even for empty balances
+          const coingeckoIds = new Set<string>();
+          
+          balances.forEach((token) => {
+            if (!token.contractAddress) {
+              const nativeId = NATIVE_COINGECKO_IDS[token.chain];
+              if (nativeId) coingeckoIds.add(nativeId);
+            } else if (token.chain === 'solana') {
+              const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
+              if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
+            } else {
+              const list = (EVM_TOKENS as any)[token.chain] as Array<any> | undefined;
+              const info = list?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
+              if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
+            }
+          });
 
+          if (coingeckoIds.size > 0) {
             const prices = await fetchPricesByIds(Array.from(coingeckoIds));
 
             // Update balances with USD values
@@ -66,7 +68,7 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
 
           updateWalletBalances(wallet.id, balances);
         } catch (error) {
-          console.error(`Failed to refresh wallet ${wallet.id}:`, error);
+          console.error(`❌ Failed to refresh wallet ${wallet.id}:`, error);
         }
       });
 
@@ -78,9 +80,9 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
       setTotalPortfolioUSD(totalUSD);
       setLastUpdated(Date.now());
 
-      console.log('Balance refresh complete. Total portfolio:', totalUSD);
+      console.log('✅ Balance refresh complete. Total portfolio: $' + totalUSD.toFixed(2));
     } catch (error) {
-      console.error('Failed to refresh balances:', error);
+      console.error('❌ Failed to refresh balances:', error);
     }
   };
 
