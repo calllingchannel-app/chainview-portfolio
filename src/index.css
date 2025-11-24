@@ -8,39 +8,40 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 18% 5%;
+    --background: 222 20% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 220 20% 8%;
+    --card: 222 18% 9%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 220 20% 8%;
+    --popover: 222 18% 9%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 166 76% 56%;
-    --primary-foreground: 220 18% 5%;
+    --primary-foreground: 222 20% 6%;
 
-    --secondary: 220 15% 12%;
+    --secondary: 222 16% 14%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 15% 12%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 222 16% 14%;
+    --muted-foreground: 215 20% 70%;
 
     --accent: 166 76% 56%;
-    --accent-foreground: 220 18% 5%;
+    --accent-foreground: 222 20% 6%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 15%;
-    --input: 220 15% 15%;
+    --border: 222 15% 18%;
+    --input: 222 15% 18%;
     --ring: 166 76% 56%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
     
     --neon-glow: 166 76% 56%;
-    --glass-bg: 220 20% 10%;
-    --glass-border: 220 15% 20%;
+    --glass-bg: 222 18% 10%;
+    --glass-border: 222 15% 20%;
+    --premium-shadow: 166 76% 56%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -109,14 +110,19 @@ All colors MUST be HSL.
   }
   
   .glass-card {
-    @apply bg-card/40 backdrop-blur-xl border border-border/50;
+    @apply bg-card/50 backdrop-blur-xl border border-border/40;
   }
   
   .neon-glow {
     box-shadow: 0 0 20px hsl(var(--neon-glow) / 0.3);
   }
   
+  .shadow-premium {
+    box-shadow: 0 4px 24px -2px hsl(var(--premium-shadow) / 0.15),
+                0 0 40px -10px hsl(var(--premium-shadow) / 0.2);
+  }
+  
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary via-emerald-400 to-primary bg-clip-text text-transparent;
   }
 }
