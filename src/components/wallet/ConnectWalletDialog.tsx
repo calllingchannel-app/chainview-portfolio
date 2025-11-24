@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletStore } from "@/stores/walletStore";
@@ -14,9 +13,9 @@ import { getAllChainBalances } from "@/lib/blockchainService";
 import { fetchPricesByIds } from "@/lib/priceService";
 import { NATIVE_COINGECKO_IDS, EVM_TOKENS, SOLANA_TOKENS } from "@/lib/tokenLists";
 import type { ConnectedWallet } from "@/stores/walletStore";
-import { useConnect } from "wagmi";
+import { useConnect, useAccount } from "wagmi";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Loader2, Wallet } from "lucide-react";
+import { Loader2, Sparkles, Check } from "lucide-react";
 
 // Import wallet logos
 import metamaskLogo from "@/assets/wallets/metamask.png";
@@ -37,18 +36,21 @@ interface ConnectWalletDialogProps {
 
 export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogProps) {
   const { toast } = useToast();
-  const { addWallet, setLoading, setLastUpdated } = useWalletStore();
+  const { addWallet, setLoading, setLastUpdated, connectedWallets } = useWalletStore();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectingWallet, setConnectingWallet] = useState<string | null>(null);
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
 
-  // Wagmi hooks for EVM
+  // EVM hooks
   const { connectors, connectAsync } = useConnect();
+  const { address: evmAddress, isConnected: isEvmConnected } = useAccount();
 
   // Solana hooks
-  const { select, wallets, connect: connectSolana } = useWallet();
+  const { wallets, select, connect: connectSolana } = useWallet();
 
   const handleEVMConnect = async (connectorName: string) => {
     setIsConnecting(true);
+    setConnectingWallet(connectorName);
     setIsLoadingBalances(true);
     setLoading(true);
     
@@ -142,6 +144,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       });
     } finally {
       setIsConnecting(false);
+      setConnectingWallet(null);
       setIsLoadingBalances(false);
       setLoading(false);
     }
@@ -149,6 +152,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
 
   const handleSolanaConnect = async (walletName: string) => {
     setIsConnecting(true);
+    setConnectingWallet(walletName);
     setIsLoadingBalances(true);
     setLoading(true);
     
@@ -237,127 +241,173 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       });
     } finally {
       setIsConnecting(false);
+      setConnectingWallet(null);
       setIsLoadingBalances(false);
       setLoading(false);
     }
   };
 
   const evmWallets = [
-    { name: "MetaMask", logo: metamaskLogo, description: "Connect to MetaMask" },
-    { name: "WalletConnect", logo: walletconnectLogo, description: "Scan with WalletConnect" },
-    { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Connect to Coinbase" },
-    { name: "Trust", logo: trustLogo, description: "Connect to Trust Wallet" },
-    { name: "Rainbow", logo: rainbowLogo, description: "Connect to Rainbow" },
+    { name: "MetaMask", logo: metamaskLogo, desc: "Most popular Web3 wallet" },
+    { name: "WalletConnect", logo: walletconnectLogo, desc: "Connect any wallet" },
+    { name: "Coinbase Wallet", logo: coinbaseLogo, desc: "Coinbase's official wallet" },
+    { name: "Trust", logo: trustLogo, desc: "Multi-chain mobile wallet" },
+    { name: "Rainbow", logo: rainbowLogo, desc: "Ethereum wallet for everyone" },
   ];
 
-  const solanaWallets = [
-    { name: "Phantom", logo: phantomLogo, description: "Most popular Solana wallet" },
-    { name: "Solflare", logo: solflareLogo, description: "Secure Solana wallet" },
-    { name: "Backpack", logo: backpackLogo, description: "Modern Solana wallet" },
-    { name: "Glow", logo: glowLogo, description: "Next-gen Solana wallet" },
-    { name: "Coin98", logo: coin98Logo, description: "Multi-chain wallet" },
+  const solanaWalletList = [
+    { name: "Phantom", logo: phantomLogo, desc: "Leading Solana wallet" },
+    { name: "Solflare", logo: solflareLogo, desc: "Secure Solana wallet" },
+    { name: "Backpack", logo: backpackLogo, desc: "Multi-chain wallet" },
+    { name: "Glow", logo: glowLogo, desc: "Elegant Solana wallet" },
+    { name: "Coin98", logo: coin98Logo, desc: "Multi-chain DeFi wallet" },
   ];
+
+  const isWalletConnected = (walletName: string) => {
+    return connectedWallets.some(w => 
+      w.name.toLowerCase().includes(walletName.toLowerCase())
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden bg-background border-border">
-        <div className="p-6 border-b border-border bg-gradient-to-br from-background via-background to-accent/5">
-          <DialogHeader>
-            <DialogTitle className="text-3xl font-bold flex items-center gap-3">
-              <Wallet className="h-8 w-8 text-primary" />
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden bg-card/95 backdrop-blur-2xl border-border/60 shadow-premium">
+        <DialogHeader className="space-y-3 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-premium">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
+            <DialogTitle className="text-2xl font-display font-bold gradient-text">
               Connect Your Wallet
             </DialogTitle>
-            <DialogDescription className="text-base mt-2">
-              Select your preferred wallet to connect and access real-time portfolio data
-            </DialogDescription>
-          </DialogHeader>
-        </div>
+          </div>
+          <DialogDescription className="text-muted-foreground">
+            Choose your preferred wallet to connect and start tracking your portfolio with real-time data
+          </DialogDescription>
+        </DialogHeader>
 
         {isLoadingBalances && (
-          <div className="bg-accent/10 border-y border-border py-4 px-6">
-            <div className="flex items-center justify-center gap-3">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <p className="text-sm font-medium">Fetching real-time wallet balances...</p>
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="text-center space-y-3">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+              <p className="text-sm font-medium">Fetching wallet balances...</p>
+              <p className="text-xs text-muted-foreground">This may take a moment</p>
             </div>
           </div>
         )}
 
         <Tabs defaultValue="evm" className="w-full">
-          <div className="px-6 pt-4">
-            <TabsList className="grid w-full grid-cols-2 h-12">
-              <TabsTrigger value="evm" className="text-base">EVM Chains</TabsTrigger>
-              <TabsTrigger value="solana" className="text-base">Solana</TabsTrigger>
-            </TabsList>
+          <TabsList className="grid w-full grid-cols-2 bg-secondary/50 p-1 rounded-lg mb-6">
+            <TabsTrigger 
+              value="evm" 
+              className="rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-medium transition-all"
+            >
+              EVM Wallets
+            </TabsTrigger>
+            <TabsTrigger 
+              value="solana" 
+              className="rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-medium transition-all"
+            >
+              Solana Wallets
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="overflow-y-auto max-h-[calc(85vh-240px)] pr-2 -mr-2">
+            <TabsContent value="evm" className="mt-0 space-y-3">
+              <div className="wallet-dialog-grid">
+                {evmWallets.map((wallet) => {
+                  const isConnected = isWalletConnected(wallet.name);
+                  const isLoading = connectingWallet === wallet.name;
+                  
+                  return (
+                    <button
+                      key={wallet.name}
+                      onClick={() => !isConnecting && !isConnected && handleEVMConnect(wallet.name)}
+                      disabled={isConnecting || isConnected}
+                      className="wallet-button group"
+                    >
+                      <div className="flex flex-col items-center gap-3 relative">
+                        <div className="relative">
+                          <img 
+                            src={wallet.logo} 
+                            alt={wallet.name}
+                            className="w-12 h-12 object-contain transition-transform duration-300 group-hover:scale-110"
+                          />
+                          {isConnected && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-center">
+                          <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                            {wallet.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 leading-tight">
+                            {wallet.desc}
+                          </p>
+                        </div>
+                        {isLoading && (
+                          <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-primary" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="solana" className="mt-0 space-y-3">
+              <div className="wallet-dialog-grid">
+                {solanaWalletList.map((wallet) => {
+                  const isConnected = isWalletConnected(wallet.name);
+                  const isLoading = connectingWallet === wallet.name;
+                  
+                  return (
+                    <button
+                      key={wallet.name}
+                      onClick={() => !isConnecting && !isConnected && handleSolanaConnect(wallet.name)}
+                      disabled={isConnecting || isConnected}
+                      className="wallet-button group"
+                    >
+                      <div className="flex flex-col items-center gap-3 relative">
+                        <div className="relative">
+                          <img 
+                            src={wallet.logo} 
+                            alt={wallet.name}
+                            className="w-12 h-12 object-contain transition-transform duration-300 group-hover:scale-110"
+                          />
+                          {isConnected && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-center">
+                          <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                            {wallet.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1 leading-tight">
+                            {wallet.desc}
+                          </p>
+                        </div>
+                        {isLoading && (
+                          <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-primary" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </TabsContent>
           </div>
-
-          <TabsContent value="evm" className="p-6 pt-4 space-y-3">
-            {evmWallets.map((wallet) => (
-              <button
-                key={wallet.name}
-                onClick={() => handleEVMConnect(wallet.name)}
-                disabled={isConnecting || isLoadingBalances}
-                className="w-full group relative overflow-hidden rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="flex items-center gap-4 p-4">
-                  <div className="relative w-12 h-12 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden group-hover:border-primary/50 transition-colors">
-                    <img 
-                      src={wallet.logo} 
-                      alt={wallet.name} 
-                      className="w-8 h-8 object-contain"
-                    />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
-                      {wallet.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {wallet.description}
-                    </p>
-                  </div>
-                  <div className="text-muted-foreground group-hover:text-primary transition-colors">
-                    →
-                  </div>
-                </div>
-              </button>
-            ))}
-          </TabsContent>
-
-          <TabsContent value="solana" className="p-6 pt-4 space-y-3">
-            {solanaWallets.map((wallet) => (
-              <button
-                key={wallet.name}
-                onClick={() => handleSolanaConnect(wallet.name)}
-                disabled={isConnecting || isLoadingBalances}
-                className="w-full group relative overflow-hidden rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="flex items-center gap-4 p-4">
-                  <div className="relative w-12 h-12 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden group-hover:border-primary/50 transition-colors">
-                    <img 
-                      src={wallet.logo} 
-                      alt={wallet.name} 
-                      className="w-8 h-8 object-contain"
-                    />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
-                      {wallet.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {wallet.description}
-                    </p>
-                  </div>
-                  <div className="text-muted-foreground group-hover:text-primary transition-colors">
-                    →
-                  </div>
-                </div>
-              </button>
-            ))}
-          </TabsContent>
         </Tabs>
 
-        <div className="px-6 pb-6 pt-2">
-          <p className="text-xs text-muted-foreground text-center">
-            By connecting your wallet, you agree to our Terms of Service. All data is fetched in real-time from the blockchain.
+        <div className="border-t border-border/50 pt-4 mt-4">
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            By connecting your wallet, you agree to our Terms of Service. 
+            <br />
+            All data is fetched in real-time from blockchain networks.
           </p>
         </div>
       </DialogContent>
