@@ -41,26 +41,29 @@ export function WalletCard({ wallet }: WalletCardProps) {
     return `https://etherscan.io/address/${address}`;
   };
 
+  // Filter out zero balances
+  const activeBalances = wallet.balances.filter(token => parseFloat(token.balance) > 0);
+
   return (
-    <Card className="glass-card p-6 hover:neon-glow transition-all">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
-            <span className="text-xl">
+    <Card className="glass-card p-6 hover:shadow-premium transition-all duration-300 group border border-border/30">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
+            <span className="text-2xl">
               {wallet.type === 'evm' ? '🦊' : '👻'}
             </span>
           </div>
           <div>
-            <h3 className="font-semibold">{wallet.name}</h3>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">{formatAddress(wallet.address)}</p>
+            <h3 className="font-bold text-lg text-foreground">{wallet.name}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm text-muted-foreground font-mono">{formatAddress(wallet.address)}</p>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleCopyAddress}
-                className="h-6 w-6 p-0"
+                className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
               >
-                <Copy className="h-3 w-3" />
+                <Copy className="h-3.5 w-3.5" />
               </Button>
               <a
                 href={getExplorerUrl(wallet.address, wallet.type)}
@@ -68,7 +71,7 @@ export function WalletCard({ wallet }: WalletCardProps) {
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
@@ -78,57 +81,57 @@ export function WalletCard({ wallet }: WalletCardProps) {
           variant="ghost"
           size="sm"
           onClick={handleRemove}
-          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground mb-1">Chain</p>
-          <p className="font-semibold">{wallet.chain}</p>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="p-4 rounded-lg bg-secondary/30 border border-border/20">
+          <p className="text-xs text-muted-foreground mb-1.5 uppercase tracking-wide">Chain</p>
+          <p className="font-bold text-foreground">{wallet.chain}</p>
         </div>
-        <div>
-          <p className="text-sm text-muted-foreground mb-1">Total Value</p>
-          <p className="font-semibold gradient-text">
+        <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20">
+          <p className="text-xs text-muted-foreground mb-1.5 uppercase tracking-wide">Total Value</p>
+          <p className="font-bold text-xl gradient-text">
             ${wallet.totalUsdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
 
-      {wallet.balances.length > 0 ? (
-        <div className="mt-4 pt-4 border-t border-border/50">
+      {activeBalances.length > 0 ? (
+        <div className="pt-4 border-t border-border/30">
           <Button
             variant="ghost"
             onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center justify-between p-2 h-auto hover:bg-secondary/50"
+            className="w-full flex items-center justify-between p-3 h-auto hover:bg-secondary/40 rounded-lg transition-colors"
           >
-            <span className="text-sm font-medium">
-              Assets ({wallet.balances.length})
+            <span className="text-sm font-semibold text-foreground">
+              Assets ({activeBalances.length})
             </span>
-            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {expanded ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </Button>
 
-          <div className={`space-y-2 mt-2 ${expanded ? '' : 'max-h-24 overflow-hidden'}`}>
-            {(expanded ? wallet.balances : wallet.balances.slice(0, 3)).map((token, idx) => (
-              <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/50">
-                <div>
-                  <p className="font-medium">{token.symbol}</p>
-                  <p className="text-xs text-muted-foreground">{token.name}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{token.chain}</p>
+          <div className={`space-y-2 mt-3 ${expanded ? '' : 'max-h-32 overflow-hidden'}`}>
+            {(expanded ? activeBalances : activeBalances.slice(0, 3)).map((token, idx) => (
+              <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-secondary/40 to-secondary/20 border border-border/20 hover:border-primary/30 transition-all">
+                <div className="flex-1">
+                  <p className="font-bold text-foreground">{token.symbol}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{token.name}</p>
+                  <p className="text-xs text-primary/80 capitalize mt-0.5">{token.chain}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium">{parseFloat(token.balance).toFixed(6)}</p>
+                  <p className="font-bold text-foreground">{parseFloat(token.balance).toFixed(6)}</p>
                   {token.priceUsd > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      ${token.usdValue.toFixed(2)}
-                    </p>
-                  )}
-                  {token.priceUsd > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      @ ${token.priceUsd.toFixed(2)}
-                    </p>
+                    <>
+                      <p className="text-sm font-semibold text-primary mt-0.5">
+                        ${token.usdValue.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        @ ${token.priceUsd.toFixed(2)}
+                      </p>
+                    </>
                   )}
                 </div>
               </div>
@@ -136,10 +139,13 @@ export function WalletCard({ wallet }: WalletCardProps) {
           </div>
         </div>
       ) : (
-        <div className="mt-4 pt-4 border-t border-border/50 text-center py-4">
-          <p className="text-sm text-muted-foreground">No assets found</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Make sure your wallet has funds on supported chains
+        <div className="pt-4 border-t border-border/30 text-center py-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted/50 mb-3">
+            <span className="text-2xl opacity-50">💰</span>
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">No assets found</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Connect a wallet with funds on supported chains
           </p>
         </div>
       )}

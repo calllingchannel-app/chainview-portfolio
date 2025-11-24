@@ -24,75 +24,86 @@ export default function Dashboard() {
     }
   }, [totalPortfolioUSD]);
 
+  const totalAssets = connectedWallets.reduce(
+    (sum, w) => sum + w.balances.filter(b => parseFloat(b.balance) > 0).length,
+    0
+  );
+
   return (
     <Layout>
       <div className="min-h-screen bg-background p-6">
         <div className="container mx-auto max-w-7xl">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-            <p className="text-muted-foreground">Track your crypto portfolio across all chains</p>
+          <div className="mb-10 animate-fade-in">
+            <h1 className="text-5xl font-bold mb-3 gradient-text">Dashboard</h1>
+            <p className="text-muted-foreground text-lg">Track your crypto portfolio across all chains in real-time</p>
           </div>
 
           {/* Total Portfolio Card */}
-          <Card className="glass-card p-8 mb-8 neon-glow">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm text-muted-foreground">Total Balance</h2>
+          <Card className="glass-card p-10 mb-8 shadow-premium hover:shadow-premium transition-all duration-500 border border-primary/20 animate-slide-up">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Total Portfolio Value</h2>
             </div>
-            <div className="space-y-2">
-              <h3 className="text-5xl font-bold gradient-text">
+            <div className="space-y-3">
+              <h3 className="text-6xl font-bold gradient-text tracking-tight">
                 ${totalPortfolioUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
               <div className="flex items-center gap-2">
                 {portfolioChange24h >= 0 ? (
-                  <TrendingUp className="h-4 w-4 text-green-500" />
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <span className="text-sm font-bold text-green-500">
+                      +{portfolioChange24h.toFixed(2)}%
+                    </span>
+                  </div>
                 ) : (
-                  <TrendingDown className="h-4 w-4 text-red-500" />
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-bold text-red-500">
+                      {portfolioChange24h.toFixed(2)}%
+                    </span>
+                  </div>
                 )}
-                <span className={`text-sm font-medium ${portfolioChange24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {portfolioChange24h >= 0 ? '+' : ''}{portfolioChange24h.toFixed(2)}% (24h)
-                </span>
+                <span className="text-sm text-muted-foreground">Last 24 hours</span>
               </div>
             </div>
           </Card>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="glass-card p-6">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Wallet className="h-6 w-6 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <Card className="glass-card p-6 hover:shadow-premium transition-all duration-300 border border-border/30 group">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
+                  <Wallet className="h-7 w-7 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Connected Wallets</p>
-                  <p className="text-2xl font-bold">{connectedWallets.length}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">Connected Wallets</p>
+                  <p className="text-3xl font-bold text-foreground">{connectedWallets.length}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="glass-card p-6">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-primary" />
+            <Card className="glass-card p-6 hover:shadow-premium transition-all duration-300 border border-border/30 group">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
+                  <TrendingUp className="h-7 w-7 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Assets</p>
-                  <p className="text-2xl font-bold">
-                    {connectedWallets.reduce((sum, w) => sum + w.balances.length, 0)}
-                  </p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">Active Assets</p>
+                  <p className="text-3xl font-bold text-foreground">{totalAssets}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="glass-card p-6">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <span className="text-2xl">⛓️</span>
+            <Card className="glass-card p-6 hover:shadow-premium transition-all duration-300 border border-border/30 group">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
+                  <span className="text-3xl">⛓️</span>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Chains</p>
-                  <p className="text-2xl font-bold">
-                    {new Set(connectedWallets.flatMap(w => w.balances.map(b => b.chain))).size}
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">Active Chains</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {new Set(connectedWallets.flatMap(w => w.balances.filter(b => parseFloat(b.balance) > 0).map(b => b.chain))).size}
                   </p>
                 </div>
               </div>
@@ -101,13 +112,15 @@ export default function Dashboard() {
 
           {/* Wallets Section */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-6">Your Wallets</h2>
+            <h2 className="text-3xl font-bold mb-8 text-foreground">Your Wallets</h2>
             {connectedWallets.length === 0 ? (
-              <Card className="glass-card p-12 text-center">
-                <Wallet className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-semibold mb-2">No Wallets Connected</h3>
-                <p className="text-muted-foreground mb-6">
-                  Connect your first wallet to start tracking your portfolio
+              <Card className="glass-card p-16 text-center border border-border/30">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-muted/30 mb-6">
+                  <Wallet className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 text-foreground">No Wallets Connected</h3>
+                <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto">
+                  Connect your first wallet to start tracking your portfolio across all blockchains
                 </p>
               </Card>
             ) : (
