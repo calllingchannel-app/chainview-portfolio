@@ -16,7 +16,19 @@ import { NATIVE_COINGECKO_IDS, EVM_TOKENS, SOLANA_TOKENS } from "@/lib/tokenList
 import type { ConnectedWallet } from "@/stores/walletStore";
 import { useConnect } from "wagmi";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Wallet } from "lucide-react";
+
+// Import wallet logos
+import metamaskLogo from "@/assets/wallets/metamask.png";
+import walletconnectLogo from "@/assets/wallets/walletconnect.png";
+import coinbaseLogo from "@/assets/wallets/coinbase.png";
+import trustLogo from "@/assets/wallets/trust.png";
+import rainbowLogo from "@/assets/wallets/rainbow.png";
+import phantomLogo from "@/assets/wallets/phantom.png";
+import solflareLogo from "@/assets/wallets/solflare.png";
+import backpackLogo from "@/assets/wallets/backpack.png";
+import glowLogo from "@/assets/wallets/glow.png";
+import coin98Logo from "@/assets/wallets/coin98.png";
 
 interface ConnectWalletDialogProps {
   open: boolean;
@@ -117,7 +129,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       
       toast({
         title: "Wallet Connected",
-        description: `${connector.name} connected successfully`,
+        description: `${connector.name} connected successfully with real-time data`,
       });
       
       onOpenChange(false);
@@ -212,7 +224,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       
       toast({
         title: "Wallet Connected",
-        description: `${wallet.adapter.name} connected successfully`,
+        description: `${wallet.adapter.name} connected successfully with real-time data`,
       });
       
       onOpenChange(false);
@@ -231,67 +243,123 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   };
 
   const evmWallets = [
-    { name: "MetaMask", icon: "🦊" },
-    { name: "WalletConnect", icon: "🔗" },
-    { name: "Coinbase Wallet", icon: "🔵" },
+    { name: "MetaMask", logo: metamaskLogo, description: "Connect to MetaMask" },
+    { name: "WalletConnect", logo: walletconnectLogo, description: "Scan with WalletConnect" },
+    { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Connect to Coinbase" },
+    { name: "Trust", logo: trustLogo, description: "Connect to Trust Wallet" },
+    { name: "Rainbow", logo: rainbowLogo, description: "Connect to Rainbow" },
   ];
 
   const solanaWallets = [
-    { name: "Phantom", icon: "👻" },
-    { name: "Solflare", icon: "☀️" },
+    { name: "Phantom", logo: phantomLogo, description: "Most popular Solana wallet" },
+    { name: "Solflare", logo: solflareLogo, description: "Secure Solana wallet" },
+    { name: "Backpack", logo: backpackLogo, description: "Modern Solana wallet" },
+    { name: "Glow", logo: glowLogo, description: "Next-gen Solana wallet" },
+    { name: "Coin98", logo: coin98Logo, description: "Multi-chain wallet" },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Connect Wallet</DialogTitle>
-          <DialogDescription>
-            Choose your wallet type to connect and track your portfolio
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-2xl p-0 overflow-hidden bg-background border-border">
+        <div className="p-6 border-b border-border bg-gradient-to-br from-background via-background to-accent/5">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-bold flex items-center gap-3">
+              <Wallet className="h-8 w-8 text-primary" />
+              Connect Your Wallet
+            </DialogTitle>
+            <DialogDescription className="text-base mt-2">
+              Select your preferred wallet to connect and access real-time portfolio data
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
         {isLoadingBalances && (
-          <div className="text-center py-4 flex items-center justify-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <p className="text-sm text-muted-foreground">Fetching wallet balances...</p>
+          <div className="bg-accent/10 border-y border-border py-4 px-6">
+            <div className="flex items-center justify-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <p className="text-sm font-medium">Fetching real-time wallet balances...</p>
+            </div>
           </div>
         )}
 
         <Tabs defaultValue="evm" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="evm">EVM Wallets</TabsTrigger>
-            <TabsTrigger value="solana">Solana Wallets</TabsTrigger>
-          </TabsList>
+          <div className="px-6 pt-4">
+            <TabsList className="grid w-full grid-cols-2 h-12">
+              <TabsTrigger value="evm" className="text-base">EVM Chains</TabsTrigger>
+              <TabsTrigger value="solana" className="text-base">Solana</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="evm" className="space-y-3 mt-4">
+          <TabsContent value="evm" className="p-6 pt-4 space-y-3">
             {evmWallets.map((wallet) => (
-              <Button
+              <button
                 key={wallet.name}
                 onClick={() => handleEVMConnect(wallet.name)}
                 disabled={isConnecting || isLoadingBalances}
-                className="w-full justify-start bg-secondary hover:bg-secondary/80"
+                className="w-full group relative overflow-hidden rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="text-2xl mr-3">{wallet.icon}</span>
-                <span>{wallet.name}</span>
-              </Button>
+                <div className="flex items-center gap-4 p-4">
+                  <div className="relative w-12 h-12 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden group-hover:border-primary/50 transition-colors">
+                    <img 
+                      src={wallet.logo} 
+                      alt={wallet.name} 
+                      className="w-8 h-8 object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
+                      {wallet.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {wallet.description}
+                    </p>
+                  </div>
+                  <div className="text-muted-foreground group-hover:text-primary transition-colors">
+                    →
+                  </div>
+                </div>
+              </button>
             ))}
           </TabsContent>
 
-          <TabsContent value="solana" className="space-y-3 mt-4">
+          <TabsContent value="solana" className="p-6 pt-4 space-y-3">
             {solanaWallets.map((wallet) => (
-              <Button
+              <button
                 key={wallet.name}
                 onClick={() => handleSolanaConnect(wallet.name)}
                 disabled={isConnecting || isLoadingBalances}
-                className="w-full justify-start bg-secondary hover:bg-secondary/80"
+                className="w-full group relative overflow-hidden rounded-xl border border-border bg-card hover:bg-accent/50 hover:border-primary/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="text-2xl mr-3">{wallet.icon}</span>
-                <span>{wallet.name}</span>
-              </Button>
+                <div className="flex items-center gap-4 p-4">
+                  <div className="relative w-12 h-12 rounded-lg bg-background border border-border flex items-center justify-center overflow-hidden group-hover:border-primary/50 transition-colors">
+                    <img 
+                      src={wallet.logo} 
+                      alt={wallet.name} 
+                      className="w-8 h-8 object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
+                      {wallet.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {wallet.description}
+                    </p>
+                  </div>
+                  <div className="text-muted-foreground group-hover:text-primary transition-colors">
+                    →
+                  </div>
+                </div>
+              </button>
             ))}
           </TabsContent>
         </Tabs>
+
+        <div className="px-6 pb-6 pt-2">
+          <p className="text-xs text-muted-foreground text-center">
+            By connecting your wallet, you agree to our Terms of Service. All data is fetched in real-time from the blockchain.
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );
