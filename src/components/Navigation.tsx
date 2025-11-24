@@ -20,15 +20,16 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-2xl border-b border-border/50 shadow-lg shadow-black/5">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <NavLink to="/dashboard" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                <span className="text-xl font-bold text-white">C</span>
+            <NavLink to="/dashboard" className="flex items-center gap-3 group">
+              <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-premium transition-all duration-300 group-hover:scale-105">
+                <span className="text-xl font-bold font-display text-white">H</span>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent opacity-0 blur-xl group-hover:opacity-50 transition-opacity duration-300"></div>
               </div>
-              <span className="text-xl font-bold gradient-text">ChainView</span>
+              <span className="text-2xl font-bold font-display gradient-text tracking-tight">HAVX</span>
             </NavLink>
 
             {/* Desktop Navigation */}
@@ -57,7 +58,7 @@ export function Navigation() {
               )}
               <Button
                 onClick={() => setShowConnectDialog(true)}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 neon-glow"
+                className="bg-gradient-to-r from-primary to-accent text-white hover:opacity-90 shadow-premium font-medium"
               >
                 <Wallet className="mr-2 h-4 w-4" />
                 {connectedWallets.length > 0 ? 'Add Wallet' : 'Connect Wallet'}

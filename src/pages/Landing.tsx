@@ -9,11 +9,11 @@ const Landing = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
+            <div className="flex items-center gap-3 group">
+              <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-premium transition-all duration-300 group-hover:scale-105">
+                <span className="text-xl font-bold font-display text-white">H</span>
               </div>
-              <span className="text-xl font-bold gradient-text">ChainView</span>
+              <span className="text-2xl font-bold font-display gradient-text tracking-tight">HAVX</span>
             </div>
             
             <div className="hidden md:flex items-center gap-8">
@@ -57,8 +57,8 @@ const Landing = () => {
           </h1>
           
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in">
-            ChainView offers a seamless, secure experience for managing your digital assets.
-            Real-time tracking, multi-chain support, and premium design.
+            HAVX offers institutional-grade portfolio management with real-time insights.
+            Professional tools for serious crypto investors and traders.
           </p>
 
           <Link to="/dashboard">
@@ -95,7 +95,7 @@ const Landing = () => {
       <section className="py-20 px-6">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Choose ChainView?</h2>
+            <h2 className="text-4xl font-bold font-display mb-4">Why Choose HAVX?</h2>
             <p className="text-muted-foreground">
               Benefits designed to provide a seamless, secure, and accessible experience for all users.
             </p>

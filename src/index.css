@@ -8,40 +8,42 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 222 20% 6%;
+    --background: 220 25% 4%;
     --foreground: 210 40% 98%;
 
-    --card: 222 18% 9%;
+    --card: 220 23% 7%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 18% 9%;
+    --popover: 220 23% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 166 76% 56%;
-    --primary-foreground: 222 20% 6%;
+    --primary: 280 100% 70%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 16% 14%;
+    --secondary: 220 20% 12%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 16% 14%;
-    --muted-foreground: 215 20% 70%;
+    --muted: 220 20% 12%;
+    --muted-foreground: 215 15% 65%;
 
-    --accent: 166 76% 56%;
-    --accent-foreground: 222 20% 6%;
+    --accent: 290 95% 65%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 222 15% 18%;
-    --input: 222 15% 18%;
-    --ring: 166 76% 56%;
+    --border: 220 18% 14%;
+    --input: 220 18% 14%;
+    --ring: 280 100% 70%;
 
-    --radius: 0.875rem;
+    --radius: 0.75rem;
     
-    --neon-glow: 166 76% 56%;
-    --glass-bg: 222 18% 10%;
-    --glass-border: 222 15% 20%;
-    --premium-shadow: 166 76% 56%;
+    --neon-glow: 280 100% 70%;
+    --glass-bg: 220 23% 8%;
+    --glass-border: 220 18% 16%;
+    --premium-shadow: 280 100% 70%;
+    --gradient-start: 280 100% 70%;
+    --gradient-end: 250 100% 65%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -106,23 +108,67 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+  }
+  
   .glass-card {
-    @apply bg-card/50 backdrop-blur-xl border border-border/40;
+    @apply bg-card/60 backdrop-blur-2xl border border-border/50;
+    box-shadow: 0 8px 32px -8px hsl(var(--premium-shadow) / 0.1);
   }
   
   .neon-glow {
-    box-shadow: 0 0 20px hsl(var(--neon-glow) / 0.3);
+    box-shadow: 0 0 30px hsl(var(--neon-glow) / 0.4),
+                0 0 60px hsl(var(--neon-glow) / 0.2);
   }
   
   .shadow-premium {
-    box-shadow: 0 4px 24px -2px hsl(var(--premium-shadow) / 0.15),
-                0 0 40px -10px hsl(var(--premium-shadow) / 0.2);
+    box-shadow: 0 8px 32px -8px hsl(var(--premium-shadow) / 0.2),
+                0 0 48px -12px hsl(var(--premium-shadow) / 0.25),
+                inset 0 1px 0 hsl(var(--border) / 0.5);
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-primary via-emerald-400 to-primary bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+    background-size: 200% auto;
+    animation: gradient-shift 3s ease infinite;
+  }
+  
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  .wallet-dialog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+  }
+  
+  .wallet-button {
+    @apply relative overflow-hidden rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm p-4 transition-all duration-300;
+    @apply hover:border-primary/50 hover:bg-card/60 hover:shadow-premium;
+  }
+  
+  .wallet-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--accent) / 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .wallet-button:hover::before {
+    opacity: 1;
   }
 }
