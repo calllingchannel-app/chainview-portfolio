@@ -34,7 +34,9 @@ function createClient(chainName: keyof typeof CHAINS) {
 const SOLANA_RPC_CANDIDATES: string[] = [
   // Prefer Helius if provided (accept both VITE_ and non-prefixed env for safety)
   (import.meta as any).env?.VITE_HELIUS_RPC_URL || (import.meta as any).env?.HELIUS_RPC_URL || '',
+  'https://solana-mainnet.g.alchemy.com/v2/demo',
   'https://api.mainnet-beta.solana.com',
+  'https://solana.public-rpc.com',
   'https://rpc.ankr.com/solana',
 ].filter(Boolean);
 
