@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, Copy } from "lucide-react";
+import { Trash2, Copy, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { useWalletStore, type ConnectedWallet } from "@/stores/walletStore";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface WalletCardProps {
   wallet: ConnectedWallet;
@@ -11,6 +12,7 @@ interface WalletCardProps {
 export function WalletCard({ wallet }: WalletCardProps) {
   const { toast } = useToast();
   const removeWallet = useWalletStore((state) => state.removeWallet);
+  const [expanded, setExpanded] = useState(false);
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(wallet.address);
@@ -30,6 +32,13 @@ export function WalletCard({ wallet }: WalletCardProps) {
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const getExplorerUrl = (address: string, type: 'evm' | 'solana') => {
+    if (type === 'solana') {
+      return `https://solscan.io/account/${address}`;
+    }
+    return `https://etherscan.io/address/${address}`;
   };
 
   return (
@@ -53,6 +62,14 @@ export function WalletCard({ wallet }: WalletCardProps) {
               >
                 <Copy className="h-3 w-3" />
               </Button>
+              <a
+                href={getExplorerUrl(wallet.address, wallet.type)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </div>
         </div>
@@ -80,19 +97,50 @@ export function WalletCard({ wallet }: WalletCardProps) {
         </div>
       </div>
 
-      {wallet.balances.length > 0 && (
+      {wallet.balances.length > 0 ? (
         <div className="mt-4 pt-4 border-t border-border/50">
-          <p className="text-sm text-muted-foreground mb-2">Assets ({wallet.balances.length})</p>
-          <div className="space-y-2">
-            {wallet.balances.slice(0, 3).map((token, idx) => (
-              <div key={idx} className="flex items-center justify-between text-sm">
-                <span>{token.symbol}</span>
-                <span className="text-muted-foreground">
-                  ${token.usdValue.toFixed(2)}
-                </span>
+          <Button
+            variant="ghost"
+            onClick={() => setExpanded(!expanded)}
+            className="w-full flex items-center justify-between p-2 h-auto hover:bg-secondary/50"
+          >
+            <span className="text-sm font-medium">
+              Assets ({wallet.balances.length})
+            </span>
+            {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+
+          <div className={`space-y-2 mt-2 ${expanded ? '' : 'max-h-24 overflow-hidden'}`}>
+            {(expanded ? wallet.balances : wallet.balances.slice(0, 3)).map((token, idx) => (
+              <div key={idx} className="flex justify-between items-center text-sm p-2 rounded-lg bg-secondary/50">
+                <div>
+                  <p className="font-medium">{token.symbol}</p>
+                  <p className="text-xs text-muted-foreground">{token.name}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{token.chain}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">{parseFloat(token.balance).toFixed(6)}</p>
+                  {token.priceUsd > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      ${token.usdValue.toFixed(2)}
+                    </p>
+                  )}
+                  {token.priceUsd > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      @ ${token.priceUsd.toFixed(2)}
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
+        </div>
+      ) : (
+        <div className="mt-4 pt-4 border-t border-border/50 text-center py-4">
+          <p className="text-sm text-muted-foreground">No assets found</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Make sure your wallet has funds on supported chains
+          </p>
         </div>
       )}
     </Card>
