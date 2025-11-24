@@ -7,7 +7,15 @@ import {
   WalletProvider,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { 
+  PhantomWalletAdapter, 
+  SolflareWalletAdapter,
+  Coin98WalletAdapter,
+  TrustWalletAdapter,
+} from '@solana/wallet-adapter-wallets';
+import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
+import { GlowWalletAdapter } from '@solana/wallet-adapter-glow';
+import { SlopeWalletAdapter } from '@solana/wallet-adapter-slope';
 import { clusterApiUrl } from '@solana/web3.js';
 
 // Import Solana wallet adapter styles
@@ -30,6 +38,11 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     () => [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
+      new BackpackWalletAdapter(),
+      new GlowWalletAdapter(),
+      new SlopeWalletAdapter(),
+      new Coin98WalletAdapter(),
+      new TrustWalletAdapter(),
     ],
     []
   );
