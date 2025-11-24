@@ -14,7 +14,7 @@ import { getAllChainBalances } from "@/lib/blockchainService";
 import { fetchPricesByIds } from "@/lib/priceService";
 import { NATIVE_COINGECKO_IDS, EVM_TOKENS, SOLANA_TOKENS } from "@/lib/tokenLists";
 import type { ConnectedWallet } from "@/stores/walletStore";
-import { useConnect, useAccount } from "wagmi";
+import { useConnect } from "wagmi";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Loader2 } from "lucide-react";
 
@@ -31,10 +31,9 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
 
   // Wagmi hooks for EVM
   const { connectors, connectAsync } = useConnect();
-  const { address: evmAddress } = useAccount();
 
   // Solana hooks
-  const { select, wallets, publicKey, connect: connectSolana } = useWallet();
+  const { select, wallets, connect: connectSolana } = useWallet();
 
   const handleEVMConnect = async (connectorName: string) => {
     setIsConnecting(true);
@@ -142,7 +141,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     setLoading(true);
     
     try {
-      const wallet = wallets.find(w => 
+      const wallet = wallets.find((w) =>
         w.adapter.name.toLowerCase().includes(walletName.toLowerCase())
       );
 
@@ -150,43 +149,42 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         throw new Error(`${walletName} not found. Please install it.`);
       }
 
+      // Select the wallet in the provider and request a connection (permission prompt)
       select(wallet.adapter.name);
       await connectSolana();
 
-      // Wait for publicKey to be available
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      const publicKey = wallet.adapter.publicKey;
       if (!publicKey) {
-        throw new Error('Failed to get wallet address');
+        throw new Error("Failed to get wallet address from adapter");
       }
 
-      const address = publicKey.toString();
-      console.log('Connected to Solana wallet:', address);
+      const address = publicKey.toBase58();
+      console.log("Connected to Solana wallet:", address);
       
       // Fetch real Solana balances
-      console.log('Fetching Solana balances...');
-      const balances = await getAllChainBalances(address, 'solana');
-      console.log('Fetched Solana balances:', balances);
+      console.log("Fetching Solana balances...");
+      const balances = await getAllChainBalances(address, "solana");
+      console.log("Fetched Solana balances:", balances);
       
       // Collect coingecko IDs
-      const coingeckoIds = new Set<string>(['solana']);
+      const coingeckoIds = new Set<string>(["solana"]);
       balances.forEach((token) => {
-        if (token.chain === 'solana' && token.contractAddress) {
+        if (token.chain === "solana" && token.contractAddress) {
           const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
           if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
         }
       });
 
-      console.log('Fetching prices for:', Array.from(coingeckoIds));
+      console.log("Fetching prices for:", Array.from(coingeckoIds));
       const prices = await fetchPricesByIds(Array.from(coingeckoIds));
-      console.log('Fetched prices:', prices);
+      console.log("Fetched prices:", prices);
 
       // Update balances with USD values
       balances.forEach((token) => {
-        if (token.symbol === 'SOL' && prices['solana']) {
-          token.priceUsd = prices['solana'];
-          token.usdValue = parseFloat(token.balance) * prices['solana'];
-        } else if (token.chain === 'solana' && token.contractAddress) {
+        if (token.symbol === "SOL" && prices["solana"]) {
+          token.priceUsd = prices["solana"];
+          token.usdValue = parseFloat(token.balance) * prices["solana"];
+        } else if (token.chain === "solana" && token.contractAddress) {
           const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
           if (info?.coingeckoId && prices[info.coingeckoId]) {
             token.priceUsd = prices[info.coingeckoId];
@@ -196,15 +194,15 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       });
       
       const totalValue = balances.reduce((sum, b) => sum + b.usdValue, 0);
-      console.log('Total USD Value:', totalValue);
+      console.log("Total USD Value:", totalValue);
       
       const connectedWallet: ConnectedWallet = {
         id: `solana-${Date.now()}`,
-        address: address,
-        type: 'solana',
+        address,
+        type: "solana",
         name: wallet.adapter.name,
-        chain: 'Solana',
-        balances: balances,
+        chain: "Solana",
+        balances,
         totalUsdValue: totalValue,
         connectedAt: Date.now(),
       };
@@ -219,7 +217,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error connecting Solana wallet:', error);
+      console.error("Error connecting Solana wallet:", error);
       toast({
         title: "Connection Failed",
         description: error?.message || "Failed to connect Solana wallet. Please try again.",
