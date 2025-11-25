@@ -1,14 +1,18 @@
 import { Layout } from "@/components/Layout";
 import { useWalletStore } from "@/stores/walletStore";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { WalletCard } from "@/components/wallet/WalletCard";
-import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Plus, Coins } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useBalanceRefresh } from "@/hooks/useBalanceRefresh";
+import { ConnectWalletDialog } from "@/components/wallet/ConnectWalletDialog";
 
 export default function Dashboard() {
-  const { connectedWallets, totalPortfolioUSD } = useWalletStore();
-  const { refreshAllWallets } = useBalanceRefresh(15000); // Auto-refresh every 15 seconds
+  const { connectedWallets, totalPortfolioUSD, lastUpdated } = useWalletStore();
+  const { refreshAllWallets } = useBalanceRefresh(15000);
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [portfolioChange24h, setPortfolioChange24h] = useState(0);
 
   // Calculate total portfolio value
@@ -31,12 +35,11 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen p-4 md:p-8 gradient-bg">
         <div className="container mx-auto max-w-7xl">
-          {/* Header */}
           <div className="mb-10 animate-fade-in">
-            <h1 className="text-5xl font-bold mb-3 gradient-text">Dashboard</h1>
-            <p className="text-muted-foreground text-lg">Track your crypto portfolio across all chains in real-time</p>
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">Dashboard</h1>
+            <p className="text-muted-foreground/90 text-base md:text-lg">Your complete multi-chain portfolio at a glance</p>
           </div>
 
           {/* Total Portfolio Card */}
@@ -110,29 +113,16 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Wallets Section */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-8 text-foreground">Your Wallets</h2>
-            {connectedWallets.length === 0 ? (
-              <Card className="glass-card p-16 text-center border border-border/30">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-muted/30 mb-6">
-                  <Wallet className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-2xl font-bold mb-3 text-foreground">No Wallets Connected</h3>
-                <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto">
-                  Connect your first wallet to start tracking your portfolio across all blockchains
-                </p>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {connectedWallets.map((wallet) => (
-                  <WalletCard key={wallet.id} wallet={wallet} />
-                ))}
+          <div className="space-y-5">
+            {connectedWallets.map((wallet, idx) => (
+              <div key={wallet.id} className="animate-slide-up" style={{ animationDelay: `${idx * 100}ms` }}>
+                <WalletCard wallet={wallet} />
               </div>
-            )}
+            ))}
           </div>
         </div>
       </div>
+      <ConnectWalletDialog open={showConnectDialog} onOpenChange={setShowConnectDialog} />
     </Layout>
   );
 }

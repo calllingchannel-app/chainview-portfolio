@@ -36,58 +36,70 @@ const LivePrices = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen p-4 md:p-8 gradient-bg">
         <div className="container mx-auto max-w-7xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Live Prices</h1>
-            <p className="text-muted-foreground">Real-time cryptocurrency market data</p>
+          <div className="mb-10 animate-fade-in">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">Live Prices</h1>
+            <p className="text-muted-foreground/90 text-base md:text-lg">Real-time cryptocurrency market data</p>
           </div>
 
           {isLoading ? (
-            <Card className="glass-card p-12 text-center">
-              <p className="text-muted-foreground">Loading market data...</p>
+            <Card className="stat-card p-16 text-center">
+              <div className="flex justify-center mb-4">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center animate-pulse">
+                  <TrendingUp className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <p className="text-muted-foreground/90 text-lg">Loading market data...</p>
             </Card>
           ) : (
-            <div className="space-y-2">
-              {cryptos.map((crypto) => (
-                <Card key={crypto.id} className="glass-card p-4 hover:neon-glow transition-all">
+            <div className="space-y-3">
+              {cryptos.map((crypto, idx) => (
+                <Card 
+                  key={crypto.id} 
+                  className="stat-card p-5 hover:neon-glow cursor-pointer group animate-fade-in"
+                  style={{ animationDelay: `${idx * 30}ms` }}
+                >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <img
-                        src={crypto.image}
-                        alt={crypto.name}
-                        className="h-10 w-10 rounded-full"
-                      />
+                    <div className="flex items-center gap-5 flex-1">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <img
+                          src={crypto.image}
+                          alt={crypto.name}
+                          className="relative h-14 w-14 rounded-full ring-2 ring-border/40 group-hover:ring-primary/50 transition-all duration-300 group-hover:scale-110"
+                        />
+                      </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{crypto.name}</h3>
-                          <Badge variant="outline" className="text-xs uppercase">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-bold text-lg">{crypto.name}</h3>
+                          <Badge variant="outline" className="text-xs uppercase bg-card/50 border-border/40">
                             {crypto.symbol}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          MCap: ${(crypto.market_cap / 1e9).toFixed(2)}B
+                        <p className="text-sm text-muted-foreground/90">
+                          MCap: ${(crypto.market_cap / 1e9).toFixed(2)}B • Vol: ${(crypto.total_volume / 1e9).toFixed(2)}B
                         </p>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="font-semibold gradient-text text-lg">
+                    <div className="text-right space-y-2">
+                      <p className="font-bold text-xl gradient-text">
                         ${crypto.current_price.toLocaleString('en-US', { 
                           minimumFractionDigits: 2,
                           maximumFractionDigits: crypto.current_price < 1 ? 6 : 2
                         })}
                       </p>
-                      <div className={`flex items-center gap-1 justify-end ${
+                      <div className={`flex items-center gap-2 justify-end font-semibold ${
                         crypto.price_change_percentage_24h > 0 ? 'text-emerald-400' : 'text-red-400'
                       }`}>
                         {crypto.price_change_percentage_24h > 0 ? (
-                          <TrendingUp className="h-4 w-4" />
+                          <TrendingUp className="h-5 w-5" />
                         ) : (
-                          <TrendingDown className="h-4 w-4" />
+                          <TrendingDown className="h-5 w-5" />
                         )}
-                        <span className="text-sm font-semibold">
-                          {crypto.price_change_percentage_24h.toFixed(2)}%
+                        <span className="text-base">
+                          {crypto.price_change_percentage_24h > 0 ? '+' : ''}{crypto.price_change_percentage_24h.toFixed(2)}%
                         </span>
                       </div>
                     </div>

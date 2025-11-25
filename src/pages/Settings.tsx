@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Wallet } from "lucide-react";
 
 const Settings = () => {
   const { connectedWallets, clearWallets } = useWalletStore();
@@ -22,25 +23,30 @@ const Settings = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen p-4 md:p-8 gradient-bg">
         <div className="container mx-auto max-w-4xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Settings</h1>
-            <p className="text-muted-foreground">Manage your ChainView preferences</p>
+          <div className="mb-10 animate-fade-in">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">Settings</h1>
+            <p className="text-muted-foreground/90 text-base md:text-lg">Manage your HAVX preferences</p>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 animate-slide-up">
             {/* Currency Settings */}
-            <Card className="glass-card p-6">
-              <h2 className="text-xl font-semibold mb-4">Display Currency</h2>
+            <Card className="stat-card">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <span className="text-xl">💱</span>
+                </div>
+                Display Currency
+              </h2>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="currency">Preferred Currency</Label>
+                  <Label htmlFor="currency" className="text-base font-semibold">Preferred Currency</Label>
                   <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger id="currency" className="w-full md:w-64 mt-2">
+                    <SelectTrigger id="currency" className="w-full md:w-64 mt-3 h-12 bg-card/40 backdrop-blur-xl border-border/40 rounded-xl">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-card/95 backdrop-blur-xl border-border/40">
                       <SelectItem value="USD">USD ($)</SelectItem>
                       <SelectItem value="EUR">EUR (€)</SelectItem>
                       <SelectItem value="INR">INR (₹)</SelectItem>
@@ -52,43 +58,63 @@ const Settings = () => {
             </Card>
 
             {/* Wallet Management */}
-            <Card className="glass-card p-6">
-              <h2 className="text-xl font-semibold mb-4">Wallet Management</h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    You have {connectedWallets.length} wallet{connectedWallets.length !== 1 ? 's' : ''} connected
-                  </p>
-                  {connectedWallets.length > 0 && (
-                    <Button
-                      variant="destructive"
-                      onClick={handleClearWallets}
-                    >
-                      Remove All Wallets
-                    </Button>
-                  )}
+            <Card className="stat-card">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <Wallet className="h-5 w-5 text-primary" />
                 </div>
+                Wallet Management
+              </h2>
+              <div className="space-y-5">
+                <div className="p-4 rounded-xl bg-card/30 backdrop-blur-xl border border-border/40">
+                  <p className="text-base text-muted-foreground/90 mb-1">
+                    Connected Wallets
+                  </p>
+                  <p className="text-3xl font-bold">{connectedWallets.length}</p>
+                </div>
+                {connectedWallets.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleClearWallets}
+                    className="shadow-lg"
+                  >
+                    Remove All Wallets
+                  </Button>
+                )}
               </div>
             </Card>
 
             {/* RPC Settings */}
-            <Card className="glass-card p-6">
-              <h2 className="text-xl font-semibold mb-4">RPC Configuration</h2>
-              <p className="text-sm text-muted-foreground mb-4">
+            <Card className="stat-card">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <span className="text-xl">⚙️</span>
+                </div>
+                RPC Configuration
+              </h2>
+              <p className="text-base text-muted-foreground/90 mb-6">
                 Custom RPC endpoints can be configured for better performance and reliability.
               </p>
-              <Button variant="outline" disabled>
+              <Button variant="outline" disabled className="bg-card/40 backdrop-blur-xl border-border/40">
                 Configure RPCs (Coming Soon)
               </Button>
             </Card>
 
             {/* About */}
-            <Card className="glass-card p-6">
-              <h2 className="text-xl font-semibold mb-4">About</h2>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>ChainView - Multi-chain Portfolio Tracker</p>
+            <Card className="stat-card">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <span className="text-xl">ℹ️</span>
+                </div>
+                About
+              </h2>
+              <div className="space-y-3 text-base text-muted-foreground/90">
+                <p className="font-semibold text-foreground">HAVX - Multi-chain Portfolio Tracker</p>
                 <p>Version 1.0.0</p>
                 <p>Built with React, TypeScript, and Web3 technologies</p>
+                <p className="text-sm pt-2 border-t border-border/40 mt-4">
+                  © 2025 HAVX. All rights reserved.
+                </p>
               </div>
             </Card>
           </div>
