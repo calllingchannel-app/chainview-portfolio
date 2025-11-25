@@ -28,6 +28,10 @@ import solflareLogo from "@/assets/wallets/solflare.png";
 import backpackLogo from "@/assets/wallets/backpack.png";
 import glowLogo from "@/assets/wallets/glow.png";
 import coin98Logo from "@/assets/wallets/coin98.png";
+import safeLogo from "@/assets/wallets/safe.png";
+import ledgerLogo from "@/assets/wallets/ledger.png";
+import trezorLogo from "@/assets/wallets/trezor.png";
+import okxLogo from "@/assets/wallets/okx.png";
 
 interface ConnectWalletDialogProps {
   open: boolean;
@@ -248,19 +252,22 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   };
 
   const evmWallets = [
-    { name: "MetaMask", logo: metamaskLogo, desc: "Most popular Web3 wallet" },
+    { name: "MetaMask", logo: metamaskLogo, desc: "Most popular wallet" },
+    { name: "Coinbase Wallet", logo: coinbaseLogo, desc: "Secure & simple" },
     { name: "WalletConnect", logo: walletconnectLogo, desc: "Connect any wallet" },
-    { name: "Coinbase Wallet", logo: coinbaseLogo, desc: "Coinbase's official wallet" },
-    { name: "Trust", logo: trustLogo, desc: "Multi-chain mobile wallet" },
-    { name: "Rainbow", logo: rainbowLogo, desc: "Ethereum wallet for everyone" },
+    { name: "Rainbow", logo: rainbowLogo, desc: "Beautiful & easy" },
+    { name: "Trust", logo: trustLogo, desc: "Multi-chain wallet" },
+    { name: "Ledger", logo: ledgerLogo, desc: "Hardware security" },
+    { name: "Safe", logo: safeLogo, desc: "Multi-sig wallet" },
+    { name: "OKX Wallet", logo: okxLogo, desc: "Exchange wallet" },
   ];
 
   const solanaWalletList = [
-    { name: "Phantom", logo: phantomLogo, desc: "Leading Solana wallet" },
-    { name: "Solflare", logo: solflareLogo, desc: "Secure Solana wallet" },
-    { name: "Backpack", logo: backpackLogo, desc: "Multi-chain wallet" },
-    { name: "Glow", logo: glowLogo, desc: "Elegant Solana wallet" },
-    { name: "Coin98", logo: coin98Logo, desc: "Multi-chain DeFi wallet" },
+    { name: "Phantom", logo: phantomLogo, desc: "Top Solana wallet" },
+    { name: "Solflare", logo: solflareLogo, desc: "Secure & fast" },
+    { name: "Backpack", logo: backpackLogo, desc: "Modern wallet" },
+    { name: "Glow", logo: glowLogo, desc: "Elegant design" },
+    { name: "Coin98", logo: coin98Logo, desc: "Multi-chain DeFi" },
   ];
 
   const isWalletConnected = (walletName: string) => {
@@ -271,49 +278,58 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden bg-card/95 backdrop-blur-2xl border-border/60 shadow-premium">
-        <DialogHeader className="space-y-3 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-premium">
-              <Sparkles className="h-4 w-4 text-white" />
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-card/50 backdrop-blur-3xl border border-border/30 shadow-glow">
+        <DialogHeader className="space-y-4 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-glow animate-pulse-glow">
+              <Sparkles className="h-5 w-5 text-white" />
             </div>
-            <DialogTitle className="text-2xl font-display font-bold gradient-text">
-              Connect Your Wallet
-            </DialogTitle>
+            <div>
+              <DialogTitle className="text-3xl font-display font-bold gradient-text">
+                Connect Wallet
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground/90 text-sm mt-1">
+                Choose your wallet to start tracking real-time portfolio data
+              </DialogDescription>
+            </div>
           </div>
-          <DialogDescription className="text-muted-foreground">
-            Choose your preferred wallet to connect and start tracking your portfolio with real-time data
-          </DialogDescription>
         </DialogHeader>
 
         {isLoadingBalances && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="text-center space-y-3">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <p className="text-sm font-medium">Fetching wallet balances...</p>
-              <p className="text-xs text-muted-foreground">This may take a moment</p>
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-xl z-50 flex items-center justify-center rounded-2xl">
+            <div className="text-center space-y-4 p-8">
+              <div className="relative">
+                <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto" />
+                <div className="absolute inset-0 animate-ping">
+                  <div className="h-16 w-16 rounded-full bg-primary/20 mx-auto"></div>
+                </div>
+              </div>
+              <div>
+                <p className="text-base font-semibold mb-1">Fetching wallet balances...</p>
+                <p className="text-sm text-muted-foreground">Scanning blockchain networks</p>
+              </div>
             </div>
           </div>
         )}
 
         <Tabs defaultValue="evm" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-secondary/50 p-1 rounded-lg mb-6">
+          <TabsList className="grid w-full grid-cols-2 bg-secondary/40 backdrop-blur-sm p-1.5 rounded-xl mb-8 border border-border/20">
             <TabsTrigger 
               value="evm" 
-              className="rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-medium transition-all"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/20 data-[state=active]:to-accent/20 data-[state=active]:text-primary font-semibold transition-all duration-300 data-[state=active]:shadow-lg"
             >
-              EVM Wallets
+              EVM Chains
             </TabsTrigger>
             <TabsTrigger 
               value="solana" 
-              className="rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-medium transition-all"
+              className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/20 data-[state=active]:to-accent/20 data-[state=active]:text-primary font-semibold transition-all duration-300 data-[state=active]:shadow-lg"
             >
-              Solana Wallets
+              Solana
             </TabsTrigger>
           </TabsList>
 
-          <div className="overflow-y-auto max-h-[calc(85vh-240px)] pr-2 -mr-2">
-            <TabsContent value="evm" className="mt-0 space-y-3">
+          <div className="overflow-y-auto max-h-[calc(90vh-280px)] pr-3 -mr-3 custom-scrollbar">
+            <TabsContent value="evm" className="mt-0">
               <div className="wallet-dialog-grid">
                 {evmWallets.map((wallet) => {
                   const isConnected = isWalletConnected(wallet.name);
@@ -326,29 +342,32 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
                       disabled={isConnecting || isConnected}
                       className="wallet-button group"
                     >
-                      <div className="flex flex-col items-center gap-3 relative">
+                      <div className="flex flex-col items-center gap-4 relative">
                         <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                           <img 
                             src={wallet.logo} 
                             alt={wallet.name}
-                            className="w-12 h-12 object-contain transition-transform duration-300 group-hover:scale-110"
+                            className="relative w-16 h-16 object-contain transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-2xl"
                           />
                           {isConnected && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                              <Check className="w-3 h-3 text-white" />
+                            <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-glow border-2 border-background">
+                              <Check className="w-4 h-4 text-white" />
                             </div>
                           )}
                         </div>
-                        <div className="text-center">
-                          <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                        <div className="text-center space-y-1">
+                          <p className="font-bold text-base text-foreground group-hover:gradient-text transition-all">
                             {wallet.name}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1 leading-tight">
+                          <p className="text-xs text-muted-foreground/80 leading-tight">
                             {wallet.desc}
                           </p>
                         </div>
                         {isLoading && (
-                          <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-primary" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-sm rounded-2xl">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          </div>
                         )}
                       </div>
                     </button>
@@ -357,7 +376,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
               </div>
             </TabsContent>
 
-            <TabsContent value="solana" className="mt-0 space-y-3">
+            <TabsContent value="solana" className="mt-0">
               <div className="wallet-dialog-grid">
                 {solanaWalletList.map((wallet) => {
                   const isConnected = isWalletConnected(wallet.name);
@@ -370,29 +389,32 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
                       disabled={isConnecting || isConnected}
                       className="wallet-button group"
                     >
-                      <div className="flex flex-col items-center gap-3 relative">
+                      <div className="flex flex-col items-center gap-4 relative">
                         <div className="relative">
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                           <img 
                             src={wallet.logo} 
                             alt={wallet.name}
-                            className="w-12 h-12 object-contain transition-transform duration-300 group-hover:scale-110"
+                            className="relative w-16 h-16 object-contain transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-2xl"
                           />
                           {isConnected && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                              <Check className="w-3 h-3 text-white" />
+                            <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-glow border-2 border-background">
+                              <Check className="w-4 h-4 text-white" />
                             </div>
                           )}
                         </div>
-                        <div className="text-center">
-                          <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                        <div className="text-center space-y-1">
+                          <p className="font-bold text-base text-foreground group-hover:gradient-text transition-all">
                             {wallet.name}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1 leading-tight">
+                          <p className="text-xs text-muted-foreground/80 leading-tight">
                             {wallet.desc}
                           </p>
                         </div>
                         {isLoading && (
-                          <Loader2 className="absolute inset-0 m-auto h-6 w-6 animate-spin text-primary" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-sm rounded-2xl">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          </div>
                         )}
                       </div>
                     </button>
@@ -403,11 +425,9 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
           </div>
         </Tabs>
 
-        <div className="border-t border-border/50 pt-4 mt-4">
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
-            By connecting your wallet, you agree to our Terms of Service. 
-            <br />
-            All data is fetched in real-time from blockchain networks.
+        <div className="border-t border-border/30 pt-5 mt-5">
+          <p className="text-xs text-muted-foreground/70 text-center leading-relaxed">
+            🔒 Secure connection • Real-time blockchain data • Your keys, your crypto
           </p>
         </div>
       </DialogContent>

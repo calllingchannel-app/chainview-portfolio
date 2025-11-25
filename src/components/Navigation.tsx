@@ -20,17 +20,14 @@ export function Navigation() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-2xl border-b border-border/50 shadow-lg shadow-black/5">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <NavLink to="/dashboard" className="flex items-center gap-3 group">
-              <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-premium transition-all duration-300 group-hover:scale-105">
-                <span className="text-xl font-bold font-display text-white">H</span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent opacity-0 blur-xl group-hover:opacity-50 transition-opacity duration-300"></div>
-              </div>
-              <span className="text-2xl font-bold font-display gradient-text tracking-tight">HAVX</span>
-            </NavLink>
+      <nav className="glass-nav sticky top-0 z-50 w-full shadow-premium">
+        <div className="container flex h-20 items-center justify-between px-4 md:px-8">
+          <NavLink to="/dashboard" className="flex items-center gap-3 group">
+            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-300">
+              <span className="text-white font-bold text-2xl">H</span>
+            </div>
+            <span className="gradient-text text-2xl font-bold">HAVX</span>
+          </NavLink>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
@@ -58,9 +55,9 @@ export function Navigation() {
               )}
               <Button
                 onClick={() => setShowConnectDialog(true)}
-                className="bg-gradient-to-r from-primary to-accent text-white hover:opacity-90 shadow-premium font-medium"
+                className="bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] hover:bg-right transition-all duration-500 shadow-glow font-bold px-6 h-11"
               >
-                <Wallet className="mr-2 h-4 w-4" />
+                <Wallet className="mr-2 h-5 w-5" />
                 {connectedWallets.length > 0 ? 'Add Wallet' : 'Connect Wallet'}
               </Button>
             </div>
