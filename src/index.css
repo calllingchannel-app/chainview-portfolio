@@ -190,8 +190,9 @@ All colors MUST be HSL.
   
   .wallet-dialog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.25rem;
+    padding: 0.5rem 0;
   }
   
   .wallet-button {

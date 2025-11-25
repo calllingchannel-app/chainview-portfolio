@@ -22,16 +22,16 @@ import metamaskLogo from "@/assets/wallets/metamask.png";
 import walletconnectLogo from "@/assets/wallets/walletconnect.png";
 import coinbaseLogo from "@/assets/wallets/coinbase.png";
 import trustLogo from "@/assets/wallets/trust.png";
-import rainbowLogo from "@/assets/wallets/rainbow.png";
+import rainbowLogo from "@/assets/wallets/rainbow-new.png";
 import phantomLogo from "@/assets/wallets/phantom.png";
 import solflareLogo from "@/assets/wallets/solflare.png";
 import backpackLogo from "@/assets/wallets/backpack.png";
 import glowLogo from "@/assets/wallets/glow.png";
 import coin98Logo from "@/assets/wallets/coin98.png";
-import safeLogo from "@/assets/wallets/safe.png";
-import ledgerLogo from "@/assets/wallets/ledger.png";
-import trezorLogo from "@/assets/wallets/trezor.png";
-import okxLogo from "@/assets/wallets/okx.png";
+import safeLogo from "@/assets/wallets/safe-new.png";
+import ledgerLogo from "@/assets/wallets/ledger-new.png";
+import trezorLogo from "@/assets/wallets/trezor-new.png";
+import okxLogo from "@/assets/wallets/okx-new.png";
 
 interface ConnectWalletDialogProps {
   open: boolean;
@@ -64,15 +64,20 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       
       if (connectorType === "walletconnect") {
         connector = connectors.find(c => c.id === "walletConnect");
+        if (!connector) {
+          throw new Error("WalletConnect is not configured. Please add VITE_WC_PROJECT_ID to your environment variables.");
+        }
       } else if (connectorType === "coinbase") {
         connector = connectors.find(c => c.id === "coinbaseWallet");
+        if (!connector) {
+          throw new Error("Coinbase Wallet connector not available.");
+        }
       } else {
         // injected - browser extension wallets
         connector = connectors.find(c => c.id === "injected");
-      }
-
-      if (!connector) {
-        throw new Error(`${walletName} connector not available. Please install the wallet extension or app.`);
+        if (!connector) {
+          throw new Error(`${walletName} is not installed. Please install the ${walletName} browser extension.`);
+        }
       }
 
       console.log(`Connecting to ${walletName} using ${connector.name} connector...`);
@@ -273,22 +278,22 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   };
 
   const evmWallets = [
-    { name: "MetaMask", logo: metamaskLogo, desc: "Most popular wallet", connector: "injected" },
-    { name: "Coinbase Wallet", logo: coinbaseLogo, desc: "Secure & simple", connector: "coinbase" },
-    { name: "WalletConnect", logo: walletconnectLogo, desc: "Connect any wallet", connector: "walletconnect" },
-    { name: "Rainbow", logo: rainbowLogo, desc: "Beautiful & easy", connector: "injected" },
-    { name: "Trust", logo: trustLogo, desc: "Multi-chain wallet", connector: "injected" },
-    { name: "Ledger", logo: ledgerLogo, desc: "Hardware security", connector: "walletconnect" },
-    { name: "Safe", logo: safeLogo, desc: "Multi-sig wallet", connector: "walletconnect" },
-    { name: "OKX Wallet", logo: okxLogo, desc: "Exchange wallet", connector: "injected" },
+    { name: "MetaMask", logo: metamaskLogo, desc: "Most popular wallet", connector: "injected", color: "from-orange-500 to-yellow-500" },
+    { name: "Coinbase Wallet", logo: coinbaseLogo, desc: "Secure & simple", connector: "coinbase", color: "from-blue-500 to-cyan-500" },
+    { name: "WalletConnect", logo: walletconnectLogo, desc: "Connect any wallet", connector: "walletconnect", color: "from-blue-400 to-indigo-500" },
+    { name: "Rainbow", logo: rainbowLogo, desc: "Beautiful & easy", connector: "injected", color: "from-pink-500 to-purple-500" },
+    { name: "Trust", logo: trustLogo, desc: "Multi-chain wallet", connector: "injected", color: "from-cyan-500 to-blue-600" },
+    { name: "OKX Wallet", logo: okxLogo, desc: "Exchange wallet", connector: "injected", color: "from-gray-700 to-black" },
+    { name: "Ledger", logo: ledgerLogo, desc: "Hardware security", connector: "walletconnect", color: "from-gray-600 to-gray-800" },
+    { name: "Safe", logo: safeLogo, desc: "Multi-sig wallet", connector: "walletconnect", color: "from-green-500 to-emerald-600" },
   ];
 
   const solanaWalletList = [
-    { name: "Phantom", logo: phantomLogo, desc: "Top Solana wallet" },
-    { name: "Solflare", logo: solflareLogo, desc: "Secure & fast" },
-    { name: "Backpack", logo: backpackLogo, desc: "Modern wallet" },
-    { name: "Glow", logo: glowLogo, desc: "Elegant design" },
-    { name: "Coin98", logo: coin98Logo, desc: "Multi-chain DeFi" },
+    { name: "Phantom", logo: phantomLogo, desc: "Top Solana wallet", color: "from-purple-500 to-indigo-600" },
+    { name: "Solflare", logo: solflareLogo, desc: "Secure & fast", color: "from-orange-500 to-red-500" },
+    { name: "Backpack", logo: backpackLogo, desc: "Modern wallet", color: "from-red-500 to-pink-500" },
+    { name: "Glow", logo: glowLogo, desc: "Elegant design", color: "from-cyan-400 to-blue-500" },
+    { name: "Coin98", logo: coin98Logo, desc: "Multi-chain DeFi", color: "from-yellow-500 to-orange-500" },
   ];
 
   const isWalletConnected = (walletName: string) => {
@@ -361,33 +366,44 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
                       key={wallet.name}
                       onClick={() => !isConnecting && !isConnected && handleEVMConnect(wallet.name, wallet.connector)}
                       disabled={isConnecting || isConnected}
-                      className="wallet-button group"
+                      className="group relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 p-6 transition-all duration-500 hover:bg-card/60 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:transform-none"
                     >
-                      <div className="flex flex-col items-center gap-4 relative">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${wallet.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                      
+                      <div className="flex flex-col items-center gap-4 relative z-10">
                         <div className="relative">
-                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                          <img 
-                            src={wallet.logo} 
-                            alt={wallet.name}
-                            className="relative w-16 h-16 object-contain transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-2xl"
-                          />
+                          <div className={`absolute inset-0 bg-gradient-to-br ${wallet.color} rounded-2xl blur-2xl opacity-0 group-hover:opacity-60 transition-all duration-500 animate-pulse-glow`}></div>
+                          <div className="relative w-20 h-20 rounded-xl bg-background/50 backdrop-blur-sm p-3 flex items-center justify-center group-hover:bg-background/80 transition-all duration-300">
+                            <img 
+                              src={wallet.logo} 
+                              alt={wallet.name}
+                              className="w-full h-full object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-lg"
+                            />
+                          </div>
                           {isConnected && (
-                            <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-glow border-2 border-background">
-                              <Check className="w-4 h-4 text-white" />
+                            <div className={`absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br ${wallet.color} rounded-full flex items-center justify-center shadow-glow border-2 border-background animate-fade-in`}>
+                              <Check className="w-5 h-5 text-white" />
                             </div>
                           )}
                         </div>
-                        <div className="text-center space-y-1">
-                          <p className="font-bold text-base text-foreground group-hover:gradient-text transition-all">
+                        
+                        <div className="text-center space-y-1.5">
+                          <p className="font-bold text-base text-foreground group-hover:text-primary transition-colors duration-300">
                             {wallet.name}
                           </p>
-                          <p className="text-xs text-muted-foreground/80 leading-tight">
+                          <p className="text-xs text-muted-foreground/70 leading-tight">
                             {wallet.desc}
                           </p>
                         </div>
+                        
                         {isLoading && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-sm rounded-2xl">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-card/95 backdrop-blur-md rounded-2xl">
+                            <div className="relative">
+                              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                              <div className="absolute inset-0 animate-ping">
+                                <Loader2 className="h-10 w-10 text-primary/30" />
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -408,33 +424,44 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
                       key={wallet.name}
                       onClick={() => !isConnecting && !isConnected && handleSolanaConnect(wallet.name)}
                       disabled={isConnecting || isConnected}
-                      className="wallet-button group"
+                      className="group relative overflow-hidden rounded-2xl bg-card/40 backdrop-blur-sm border border-border/40 p-6 transition-all duration-500 hover:bg-card/60 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:transform-none"
                     >
-                      <div className="flex flex-col items-center gap-4 relative">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${wallet.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
+                      
+                      <div className="flex flex-col items-center gap-4 relative z-10">
                         <div className="relative">
-                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                          <img 
-                            src={wallet.logo} 
-                            alt={wallet.name}
-                            className="relative w-16 h-16 object-contain transition-all duration-500 group-hover:scale-110 group-hover:drop-shadow-2xl"
-                          />
+                          <div className={`absolute inset-0 bg-gradient-to-br ${wallet.color} rounded-2xl blur-2xl opacity-0 group-hover:opacity-60 transition-all duration-500 animate-pulse-glow`}></div>
+                          <div className="relative w-20 h-20 rounded-xl bg-background/50 backdrop-blur-sm p-3 flex items-center justify-center group-hover:bg-background/80 transition-all duration-300">
+                            <img 
+                              src={wallet.logo} 
+                              alt={wallet.name}
+                              className="w-full h-full object-contain transition-all duration-500 group-hover:scale-110 drop-shadow-lg"
+                            />
+                          </div>
                           {isConnected && (
-                            <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-glow border-2 border-background">
-                              <Check className="w-4 h-4 text-white" />
+                            <div className={`absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br ${wallet.color} rounded-full flex items-center justify-center shadow-glow border-2 border-background animate-fade-in`}>
+                              <Check className="w-5 h-5 text-white" />
                             </div>
                           )}
                         </div>
-                        <div className="text-center space-y-1">
-                          <p className="font-bold text-base text-foreground group-hover:gradient-text transition-all">
+                        
+                        <div className="text-center space-y-1.5">
+                          <p className="font-bold text-base text-foreground group-hover:text-primary transition-colors duration-300">
                             {wallet.name}
                           </p>
-                          <p className="text-xs text-muted-foreground/80 leading-tight">
+                          <p className="text-xs text-muted-foreground/70 leading-tight">
                             {wallet.desc}
                           </p>
                         </div>
+                        
                         {isLoading && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-card/80 backdrop-blur-sm rounded-2xl">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-card/95 backdrop-blur-md rounded-2xl">
+                            <div className="relative">
+                              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                              <div className="absolute inset-0 animate-ping">
+                                <Loader2 className="h-10 w-10 text-primary/30" />
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
