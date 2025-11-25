@@ -7,6 +7,13 @@ const projectId = import.meta.env.VITE_WC_PROJECT_ID;
 export const config = createConfig({
   chains: [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche],
   connectors: [
+    injected({
+      shimDisconnect: true,
+    }),
+    coinbaseWallet({
+      appName: 'HAVX',
+      appLogoUrl: 'https://havx.app/icon.png'
+    }),
     // Only include WalletConnect if projectId is provided
     ...(projectId ? [walletConnect({ 
       projectId,
@@ -18,13 +25,6 @@ export const config = createConfig({
         icons: ['https://havx.app/icon.png']
       }
     })] : []),
-    injected({
-      shimDisconnect: true,
-    }),
-    coinbaseWallet({
-      appName: 'HAVX',
-      appLogoUrl: 'https://havx.app/icon.png'
-    }),
   ],
   transports: {
     [mainnet.id]: http(),
