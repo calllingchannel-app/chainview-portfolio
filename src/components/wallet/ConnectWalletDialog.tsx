@@ -52,21 +52,30 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   // Solana hooks
   const { wallets, select, connect: connectSolana } = useWallet();
 
-  const handleEVMConnect = async (connectorName: string) => {
+  const handleEVMConnect = async (walletName: string, connectorType: string) => {
     setIsConnecting(true);
-    setConnectingWallet(connectorName);
+    setConnectingWallet(walletName);
     setIsLoadingBalances(true);
     setLoading(true);
     
     try {
-      const connector = connectors.find(c => 
-        c.name.toLowerCase().includes(connectorName.toLowerCase())
-      );
-
-      if (!connector) {
-        throw new Error(`${connectorName} connector not found`);
+      // Map connector types to wagmi connectors
+      let connector;
+      
+      if (connectorType === "walletconnect") {
+        connector = connectors.find(c => c.id === "walletConnect");
+      } else if (connectorType === "coinbase") {
+        connector = connectors.find(c => c.id === "coinbaseWallet");
+      } else {
+        // injected - browser extension wallets
+        connector = connectors.find(c => c.id === "injected");
       }
 
+      if (!connector) {
+        throw new Error(`${walletName} connector not available. Please install the wallet extension or app.`);
+      }
+
+      console.log(`Connecting to ${walletName} using ${connector.name} connector...`);
       const result = await connectAsync({ connector });
       const address = result.accounts[0];
 
@@ -123,7 +132,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         id: `evm-${Date.now()}`,
         address,
         type: 'evm',
-        name: connector.name,
+        name: walletName, // Use the actual wallet name instead of connector name
         chain: 'Multi-Chain',
         balances: balances,
         totalUsdValue: totalValue,
@@ -135,15 +144,27 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       
       toast({
         title: "Wallet Connected",
-        description: `${connector.name} connected successfully with real-time data`,
+        description: `${walletName} connected successfully with real-time data`,
       });
       
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error connecting EVM wallet:', error);
+      
+      let errorMessage = error?.message || "Failed to connect wallet. Please try again.";
+      
+      // Provide helpful error messages for common issues
+      if (error?.message?.includes('User rejected')) {
+        errorMessage = "Connection request was rejected. Please try again and approve the connection.";
+      } else if (error?.message?.includes('not available') || error?.message?.includes('not installed')) {
+        errorMessage = `${walletName} is not installed. Please install the ${walletName} extension or app.`;
+      } else if (error?.message?.includes('Chain')) {
+        errorMessage = "Please switch to a supported network (Ethereum, Polygon, etc.) in your wallet.";
+      }
+      
       toast({
         title: "Connection Failed",
-        description: error?.message || "Failed to connect wallet. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -252,14 +273,14 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   };
 
   const evmWallets = [
-    { name: "MetaMask", logo: metamaskLogo, desc: "Most popular wallet" },
-    { name: "Coinbase Wallet", logo: coinbaseLogo, desc: "Secure & simple" },
-    { name: "WalletConnect", logo: walletconnectLogo, desc: "Connect any wallet" },
-    { name: "Rainbow", logo: rainbowLogo, desc: "Beautiful & easy" },
-    { name: "Trust", logo: trustLogo, desc: "Multi-chain wallet" },
-    { name: "Ledger", logo: ledgerLogo, desc: "Hardware security" },
-    { name: "Safe", logo: safeLogo, desc: "Multi-sig wallet" },
-    { name: "OKX Wallet", logo: okxLogo, desc: "Exchange wallet" },
+    { name: "MetaMask", logo: metamaskLogo, desc: "Most popular wallet", connector: "injected" },
+    { name: "Coinbase Wallet", logo: coinbaseLogo, desc: "Secure & simple", connector: "coinbase" },
+    { name: "WalletConnect", logo: walletconnectLogo, desc: "Connect any wallet", connector: "walletconnect" },
+    { name: "Rainbow", logo: rainbowLogo, desc: "Beautiful & easy", connector: "injected" },
+    { name: "Trust", logo: trustLogo, desc: "Multi-chain wallet", connector: "injected" },
+    { name: "Ledger", logo: ledgerLogo, desc: "Hardware security", connector: "walletconnect" },
+    { name: "Safe", logo: safeLogo, desc: "Multi-sig wallet", connector: "walletconnect" },
+    { name: "OKX Wallet", logo: okxLogo, desc: "Exchange wallet", connector: "injected" },
   ];
 
   const solanaWalletList = [
@@ -338,7 +359,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
                   return (
                     <button
                       key={wallet.name}
-                      onClick={() => !isConnecting && !isConnected && handleEVMConnect(wallet.name)}
+                      onClick={() => !isConnecting && !isConnected && handleEVMConnect(wallet.name, wallet.connector)}
                       disabled={isConnecting || isConnected}
                       className="wallet-button group"
                     >
