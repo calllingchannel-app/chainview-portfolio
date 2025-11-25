@@ -35,77 +35,83 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="min-h-screen p-4 md:p-8 gradient-bg">
+      <div className="min-h-screen p-6 md:p-10 gradient-bg">
         <div className="container mx-auto max-w-7xl">
-          <div className="mb-10 animate-fade-in">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 gradient-text">Dashboard</h1>
-            <p className="text-muted-foreground/90 text-base md:text-lg">Your complete multi-chain portfolio at a glance</p>
+          <div className="mb-12 animate-fade-in">
+            <h1 className="text-6xl md:text-7xl font-bold mb-4 gradient-text tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground/80 text-lg md:text-xl">Your complete multi-chain portfolio at a glance</p>
           </div>
 
           {/* Total Portfolio Card */}
-          <Card className="glass-card p-10 mb-8 shadow-premium hover:shadow-premium transition-all duration-500 border border-primary/20 animate-slide-up">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">Total Portfolio Value</h2>
-            </div>
-            <div className="space-y-3">
-              <h3 className="text-6xl font-bold gradient-text tracking-tight">
-                ${totalPortfolioUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </h3>
-              <div className="flex items-center gap-2">
-                {portfolioChange24h >= 0 ? (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <span className="text-sm font-bold text-green-500">
-                      +{portfolioChange24h.toFixed(2)}%
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
-                    <TrendingDown className="h-4 w-4 text-red-500" />
-                    <span className="text-sm font-bold text-red-500">
-                      {portfolioChange24h.toFixed(2)}%
-                    </span>
-                  </div>
-                )}
-                <span className="text-sm text-muted-foreground">Last 24 hours</span>
+          <Card className="glass-card p-12 mb-10 shadow-premium hover:neon-glow transition-all duration-500 animate-slide-up relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold">Total Portfolio Value</h2>
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-7xl md:text-8xl font-bold gradient-text tracking-tighter">
+                  ${totalPortfolioUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </h3>
+                <div className="flex items-center gap-3">
+                  {portfolioChange24h >= 0 ? (
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 backdrop-blur-sm">
+                      <TrendingUp className="h-5 w-5 text-green-400" />
+                      <span className="text-base font-bold text-green-400">
+                        +{portfolioChange24h.toFixed(2)}%
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 backdrop-blur-sm">
+                      <TrendingDown className="h-5 w-5 text-red-400" />
+                      <span className="text-base font-bold text-red-400">
+                        {portfolioChange24h.toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-base text-muted-foreground/70">Last 24 hours</span>
+                </div>
               </div>
             </div>
           </Card>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <Card className="glass-card p-6 hover:shadow-premium transition-all duration-300 border border-border/30 group">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
-                  <Wallet className="h-7 w-7 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <Card className="glass-card p-7 hover:neon-glow transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative flex items-center gap-5">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center ring-2 ring-white/5 group-hover:ring-primary/30 group-hover:scale-110 transition-all duration-300">
+                  <Wallet className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">Connected Wallets</p>
-                  <p className="text-3xl font-bold text-foreground">{connectedWallets.length}</p>
+                  <p className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold mb-2">Connected Wallets</p>
+                  <p className="text-4xl font-bold text-foreground">{connectedWallets.length}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="glass-card p-6 hover:shadow-premium transition-all duration-300 border border-border/30 group">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
-                  <TrendingUp className="h-7 w-7 text-primary" />
+            <Card className="glass-card p-7 hover:neon-glow transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative flex items-center gap-5">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center ring-2 ring-white/5 group-hover:ring-accent/30 group-hover:scale-110 transition-all duration-300">
+                  <TrendingUp className="h-8 w-8 text-accent" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">Active Assets</p>
-                  <p className="text-3xl font-bold text-foreground">{totalAssets}</p>
+                  <p className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold mb-2">Active Assets</p>
+                  <p className="text-4xl font-bold text-foreground">{totalAssets}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="glass-card p-6 hover:shadow-premium transition-all duration-300 border border-border/30 group">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 flex items-center justify-center ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
-                  <span className="text-3xl">⛓️</span>
+            <Card className="glass-card p-7 hover:neon-glow transition-all duration-500 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative flex items-center gap-5">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-primary/10 flex items-center justify-center ring-2 ring-white/5 group-hover:ring-primary/30 group-hover:scale-110 transition-all duration-300">
+                  <span className="text-4xl">⛓️</span>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">Active Chains</p>
-                  <p className="text-3xl font-bold text-foreground">
+                  <p className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold mb-2">Active Chains</p>
+                  <p className="text-4xl font-bold text-foreground">
                     {new Set(connectedWallets.flatMap(w => w.balances.filter(b => parseFloat(b.balance) > 0).map(b => b.chain))).size}
                   </p>
                 </div>
