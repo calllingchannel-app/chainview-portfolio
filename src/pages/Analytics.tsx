@@ -39,23 +39,25 @@ const Analytics = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen p-6 md:p-10 gradient-bg">
         <div className="container mx-auto max-w-7xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Analytics</h1>
-            <p className="text-muted-foreground">Visualize your portfolio distribution</p>
+          <div className="mb-12 animate-fade-in">
+            <h1 className="text-6xl md:text-7xl font-bold mb-4 gradient-text tracking-tight">Analytics</h1>
+            <p className="text-muted-foreground/80 text-lg md:text-xl">Visualize your portfolio distribution</p>
           </div>
 
           {connectedWallets.length === 0 ? (
-            <Card className="glass-card p-12 text-center">
-              <p className="text-muted-foreground">Connect wallets to view analytics</p>
+            <Card className="stat-card p-20 text-center">
+              <p className="text-muted-foreground/80 text-xl">Connect wallets to view analytics</p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Chain Distribution */}
-              <Card className="glass-card p-6">
-                <h2 className="text-xl font-semibold mb-4">Chain Distribution</h2>
-                <ResponsiveContainer width="100%" height={300}>
+              <Card className="stat-card animate-fade-in relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative">
+                  <h2 className="text-2xl font-bold mb-6 gradient-text">Chain Distribution</h2>
+                  <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={chainData}
@@ -74,13 +76,16 @@ const Analytics = () => {
                     <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
                     <Legend />
                   </PieChart>
-                </ResponsiveContainer>
+                  </ResponsiveContainer>
+                </div>
               </Card>
 
               {/* Token Allocation */}
-              <Card className="glass-card p-6">
-                <h2 className="text-xl font-semibold mb-4">Top 6 Token Allocation</h2>
-                <ResponsiveContainer width="100%" height={300}>
+              <Card className="stat-card animate-fade-in relative overflow-hidden group" style={{ animationDelay: '100ms' }}>
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative">
+                  <h2 className="text-2xl font-bold mb-6 gradient-text">Top 6 Token Allocation</h2>
+                  <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
                       data={tokenData}
@@ -99,30 +104,34 @@ const Analytics = () => {
                     <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
                     <Legend />
                   </PieChart>
-                </ResponsiveContainer>
+                  </ResponsiveContainer>
+                </div>
               </Card>
 
               {/* Portfolio Summary */}
-              <Card className="glass-card p-6 lg:col-span-2">
-                <h2 className="text-xl font-semibold mb-4">Portfolio Summary</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Total Value</p>
-                    <p className="text-2xl font-bold gradient-text">
-                      ${totalPortfolioUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Wallets</p>
-                    <p className="text-2xl font-bold">{connectedWallets.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Chains</p>
-                    <p className="text-2xl font-bold">{chainData.length}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Assets</p>
-                    <p className="text-2xl font-bold">{allTokens.length}</p>
+              <Card className="stat-card lg:col-span-2 animate-fade-in relative overflow-hidden group" style={{ animationDelay: '200ms' }}>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="relative">
+                  <h2 className="text-2xl font-bold mb-8 gradient-text">Portfolio Summary</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold">Total Value</p>
+                      <p className="text-3xl font-bold gradient-text">
+                        ${totalPortfolioUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold">Wallets</p>
+                      <p className="text-3xl font-bold text-foreground">{connectedWallets.length}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold">Chains</p>
+                      <p className="text-3xl font-bold text-foreground">{chainData.length}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold">Assets</p>
+                      <p className="text-3xl font-bold text-foreground">{allTokens.length}</p>
+                    </div>
                   </div>
                 </div>
               </Card>
