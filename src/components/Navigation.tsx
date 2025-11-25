@@ -21,13 +21,14 @@ export function Navigation() {
   return (
     <>
       <nav className="glass-nav sticky top-0 z-50 w-full shadow-premium">
-        <div className="container flex h-20 items-center justify-between px-4 md:px-8">
-          <NavLink to="/dashboard" className="flex items-center gap-3 group">
-            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-300">
-              <span className="text-white font-bold text-2xl">H</span>
-            </div>
-            <span className="gradient-text text-2xl font-bold">HAVX</span>
-          </NavLink>
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="flex h-20 items-center justify-between">
+            <NavLink to="/dashboard" className="flex items-center gap-3 group">
+              <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-2xl">H</span>
+              </div>
+              <span className="gradient-text text-2xl font-bold">HAVX</span>
+            </NavLink>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
@@ -73,7 +74,7 @@ export function Navigation() {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pt-4 border-t border-border/50 space-y-3">
+            <div className="md:hidden pb-4 pt-4 border-t border-border/50 space-y-3">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
@@ -90,7 +91,7 @@ export function Navigation() {
                   setShowConnectDialog(true);
                   setMobileMenuOpen(false);
                 }}
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 neon-glow mt-4"
+                className="w-full bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] hover:bg-right transition-all duration-500 shadow-glow font-bold mt-4"
               >
                 <Wallet className="mr-2 h-4 w-4" />
                 {connectedWallets.length > 0 ? 'Add Wallet' : 'Connect Wallet'}
