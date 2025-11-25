@@ -29,7 +29,7 @@ import okxLogo from "@/assets/wallets/okx-new.png";
 
 interface ConnectWalletDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean);
+  onOpenChange: (open: boolean) => void;
 }
 
 export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogProps) {
@@ -79,6 +79,8 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         address,
         name: walletName,
         chain: 'ethereum',
+        type: 'evm',
+        connectedAt: Date.now(),
         balances: balancesWithPrices,
         totalUsdValue: balancesWithPrices.reduce((sum, b) => sum + b.usdValue, 0),
       });
