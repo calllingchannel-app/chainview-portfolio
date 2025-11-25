@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Shield, Zap, TrendingDown, Sparkles } from "lucide-react";
-
 const Landing = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4">
@@ -73,7 +71,7 @@ const Landing = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-left">
                 <div className="text-sm text-muted-foreground mb-2">Total Balance</div>
-                <div className="text-3xl font-bold gradient-text">$22,193.05</div>
+                <div className="text-3xl font-bold gradient-text text-emerald-400">$22,193.05</div>
                 <div className="text-sm text-emerald-400 mt-1">+47.3%</div>
               </div>
               <div className="text-left">
@@ -162,8 +160,6 @@ const Landing = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
