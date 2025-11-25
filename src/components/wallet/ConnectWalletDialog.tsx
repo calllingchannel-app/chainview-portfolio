@@ -152,15 +152,15 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   };
 
   const evmWallets = [
-    { name: "MetaMask", logo: metamaskLogo, description: "Browser & mobile wallet", connector: "injected" as const, color: "from-orange-500/20 to-orange-600/20" },
+    { name: "MetaMask", logo: metamaskLogo, description: "Browser & extension wallet", connector: "injected" as const, color: "from-orange-500/20 to-orange-600/20" },
     { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Secure non-custodial wallet", connector: "coinbase" as const, color: "from-blue-500/20 to-blue-600/20" },
     { name: "WalletConnect", logo: walletConnectLogo, description: "Connect any mobile wallet", connector: "walletconnect" as const, color: "from-blue-400/20 to-blue-500/20" },
-    { name: "Trust Wallet", logo: trustLogo, description: "Official Trust Wallet via WalletConnect", connector: "walletconnect" as const, color: "from-blue-500/20 to-cyan-500/20" },
-    { name: "Rainbow Wallet", logo: rainbowLogo, description: "Rainbow via WalletConnect", connector: "walletconnect" as const, color: "from-purple-500/20 to-pink-500/20" },
-    { name: "Safe (Gnosis Safe)", logo: safeLogo, description: "Safe via WalletConnect", connector: "walletconnect" as const, color: "from-green-500/20 to-emerald-500/20" },
-    { name: "Ledger Live", logo: ledgerLogo, description: "Ledger via WalletConnect", connector: "walletconnect" as const, color: "from-gray-600/20 to-gray-700/20" },
-    { name: "Trezor Suite", logo: trezorLogo, description: "Trezor via WalletConnect", connector: "walletconnect" as const, color: "from-green-600/20 to-teal-600/20" },
-    { name: "OKX Web3 Wallet", logo: okxLogo, description: "OKX via WalletConnect or extension", connector: "walletconnect" as const, color: "from-gray-700/20 to-gray-800/20" },
+    { name: "Trust Wallet", logo: trustLogo, description: "Browser & mobile wallet", connector: "injected" as const, color: "from-blue-500/20 to-cyan-500/20" },
+    { name: "Rainbow", logo: rainbowLogo, description: "Browser & mobile wallet", connector: "injected" as const, color: "from-purple-500/20 to-pink-500/20" },
+    { name: "Safe", logo: safeLogo, description: "Multi-sig smart account", connector: "walletconnect" as const, color: "from-green-500/20 to-emerald-500/20" },
+    { name: "Ledger", logo: ledgerLogo, description: "Ledger via WalletConnect", connector: "walletconnect" as const, color: "from-gray-600/20 to-gray-700/20" },
+    { name: "Trezor", logo: trezorLogo, description: "Trezor via WalletConnect", connector: "walletconnect" as const, color: "from-green-600/20 to-teal-600/20" },
+    { name: "OKX Wallet", logo: okxLogo, description: "Browser & mobile wallet", connector: "injected" as const, color: "from-gray-700/20 to-gray-800/20" },
   ];
 
   const solanaWallets = [
