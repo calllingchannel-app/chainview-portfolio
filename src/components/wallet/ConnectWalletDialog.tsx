@@ -46,24 +46,32 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     return connectedWallets.some(w => w.address.toLowerCase() === address.toLowerCase());
   };
 
-  const handleEVMConnect = async (walletName: string, connectorType: 'injected' | 'walletconnect' | 'coinbase') => {
+  const handleEVMConnect = async (walletName: string, connectorType: 'injected' | 'walletconnect' | 'coinbase' | 'metamask') => {
     if (loadingWallet) return;
     setLoadingWallet(walletName);
     
     try {
       let connector;
-      if (connectorType === 'walletconnect') {
+      
+      // Route to the correct connector based on type
+      if (connectorType === 'metamask') {
+        // Try MetaMask connector first, fallback to injected
+        connector = connectors.find(c => c.id === 'metaMask') || connectors.find(c => c.id === 'injected');
+      } else if (connectorType === 'walletconnect') {
         if (!WALLETCONNECT_ENABLED) {
-          throw new Error("WalletConnect is not configured. Please set VITE_WC_PROJECT_ID in your environment to use WalletConnect-based wallets.");
+          throw new Error("WalletConnect is not configured. Please add your WalletConnect Project ID to connect " + walletName);
         }
         connector = connectors.find(c => c.id === 'walletConnect');
       } else if (connectorType === 'coinbase') {
         connector = connectors.find(c => c.id === 'coinbaseWallet');
       } else {
+        // For generic injected wallets
         connector = connectors.find(c => c.id === 'injected');
       }
 
-      if (!connector) throw new Error(`${walletName} is not available in this browser`);
+      if (!connector) {
+        throw new Error(`${walletName} connector not found. Make sure the wallet extension is installed.`);
+      }
 
       const result = await connectAsync({ connector });
       const address = result.accounts[0];
@@ -152,15 +160,15 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   };
 
   const evmWallets = [
-    { name: "MetaMask", logo: metamaskLogo, description: "Browser & extension wallet", connector: "injected" as const, color: "from-orange-500/20 to-orange-600/20" },
+    { name: "MetaMask", logo: metamaskLogo, description: "Most popular browser wallet", connector: "metamask" as const, color: "from-orange-500/20 to-orange-600/20" },
     { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Secure non-custodial wallet", connector: "coinbase" as const, color: "from-blue-500/20 to-blue-600/20" },
-    { name: "WalletConnect", logo: walletConnectLogo, description: "Connect any mobile wallet", connector: "walletconnect" as const, color: "from-blue-400/20 to-blue-500/20" },
-    { name: "Trust Wallet", logo: trustLogo, description: "Browser & mobile wallet", connector: "injected" as const, color: "from-blue-500/20 to-cyan-500/20" },
-    { name: "Rainbow", logo: rainbowLogo, description: "Browser & mobile wallet", connector: "injected" as const, color: "from-purple-500/20 to-pink-500/20" },
-    { name: "Safe", logo: safeLogo, description: "Multi-sig smart account", connector: "walletconnect" as const, color: "from-green-500/20 to-emerald-500/20" },
-    { name: "Ledger", logo: ledgerLogo, description: "Ledger via WalletConnect", connector: "walletconnect" as const, color: "from-gray-600/20 to-gray-700/20" },
-    { name: "Trezor", logo: trezorLogo, description: "Trezor via WalletConnect", connector: "walletconnect" as const, color: "from-green-600/20 to-teal-600/20" },
-    { name: "OKX Wallet", logo: okxLogo, description: "Browser & mobile wallet", connector: "injected" as const, color: "from-gray-700/20 to-gray-800/20" },
+    { name: "Trust Wallet", logo: trustLogo, description: "Connect via WalletConnect", connector: "walletconnect" as const, color: "from-blue-500/20 to-cyan-500/20" },
+    { name: "Rainbow", logo: rainbowLogo, description: "Connect via WalletConnect", connector: "walletconnect" as const, color: "from-purple-500/20 to-pink-500/20" },
+    { name: "WalletConnect", logo: walletConnectLogo, description: "Scan QR with any wallet", connector: "walletconnect" as const, color: "from-blue-400/20 to-blue-500/20" },
+    { name: "Safe", logo: safeLogo, description: "Multi-sig via WalletConnect", connector: "walletconnect" as const, color: "from-green-500/20 to-emerald-500/20" },
+    { name: "Ledger", logo: ledgerLogo, description: "Hardware via WalletConnect", connector: "walletconnect" as const, color: "from-gray-600/20 to-gray-700/20" },
+    { name: "Trezor", logo: trezorLogo, description: "Hardware via WalletConnect", connector: "walletconnect" as const, color: "from-green-600/20 to-teal-600/20" },
+    { name: "OKX Wallet", logo: okxLogo, description: "Connect via WalletConnect", connector: "walletconnect" as const, color: "from-gray-700/20 to-gray-800/20" },
   ];
 
   const solanaWallets = [
