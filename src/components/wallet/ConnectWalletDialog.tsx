@@ -6,7 +6,6 @@ import { useWalletStore } from "@/stores/walletStore";
 import { Loader2, Check } from "lucide-react";
 import { useConnect, useAccount } from "wagmi";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Connection } from "@solana/web3.js";
 import { getAllChainBalances } from "@/lib/blockchainService";
 import { fetchPricesByIds } from "@/lib/priceService";
 import { NATIVE_COINGECKO_IDS } from "@/lib/tokenLists";
@@ -94,6 +93,55 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     }
   };
 
+  const handleSolanaConnect = async (walletName: string, walletEntry: any) => {
+    if (loadingWallet) return;
+    setLoadingWallet(walletName);
+
+    try {
+      if (!walletEntry) {
+        throw new Error(`${walletName} wallet not available in this browser`);
+      }
+
+      const adapter: any = walletEntry.adapter as any;
+
+      // Select and connect the chosen Solana wallet
+      select(adapter.name as any);
+      await connectSolana();
+
+      const pubkey = adapter.publicKey;
+      if (!pubkey) {
+        throw new Error("Failed to get Solana wallet address");
+      }
+
+      const address = pubkey.toBase58();
+      if (isWalletConnected(address)) {
+        toast({ title: "Already connected", description: `${walletName} is already connected` });
+        setLoadingWallet(null);
+        return;
+      }
+
+      const balances = await getAllChainBalances(address, "solana");
+
+      addWallet({
+        id: `${walletName}-${Date.now()}`,
+        address,
+        name: walletName,
+        type: "solana",
+        chain: "solana",
+        balances,
+        totalUsdValue: balances.reduce((sum, b) => sum + b.usdValue, 0),
+        connectedAt: Date.now(),
+      });
+
+      toast({ title: "Success", description: `Connected ${walletName}` });
+      onOpenChange(false);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Connection failed", variant: "destructive" });
+    } finally {
+      setLoadingWallet(null);
+    }
+  };
+
   const evmWallets = [
     { name: "MetaMask", logo: metamaskLogo, description: "Most popular", connector: "injected" as const, color: "from-orange-500/20 to-orange-600/20" },
     { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Secure & easy", connector: "coinbase" as const, color: "from-blue-500/20 to-blue-600/20" },
@@ -154,19 +202,33 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
 
           <TabsContent value="solana" className="mt-0">
             <div className="wallet-dialog-grid">
-              {solanaWallets.map((wallet) => (
-                <button key={wallet.name} disabled className="wallet-button group opacity-50">
-                  <div className="relative flex flex-col items-center gap-3">
-                    <div className="h-16 w-16 rounded-xl bg-card/80 backdrop-blur-sm flex items-center justify-center p-3">
-                      <img src={wallet.logo} alt={wallet.name} className="w-full h-full object-contain" />
+              {solanaWallets.map((wallet) => {
+                const walletEntry = wallets.find((w) =>
+                  w.adapter.name.toLowerCase().includes(wallet.name.toLowerCase())
+                );
+                const isLoading = loadingWallet === wallet.name;
+                const isDisabled = !walletEntry || (!!loadingWallet && !isLoading);
+
+                return (
+                  <button
+                    key={wallet.name}
+                    onClick={() => walletEntry && handleSolanaConnect(wallet.name, walletEntry)}
+                    disabled={isDisabled}
+                    className={`wallet-button group ${!walletEntry ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <div className="relative flex flex-col items-center gap-3">
+                      <div className="h-16 w-16 rounded-xl bg-card/80 backdrop-blur-sm flex items-center justify-center p-3 group-hover:scale-110 transition-transform duration-300">
+                        <img src={wallet.logo} alt={wallet.name} className="w-full h-full object-contain" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{wallet.name}</p>
+                        <p className="text-xs text-muted-foreground/80 mt-0.5">{wallet.description}</p>
+                      </div>
+                      {isLoading && <Loader2 className="h-5 w-5 animate-spin text-primary mt-1" />}
                     </div>
-                    <div className="text-center">
-                      <p className="font-bold text-sm">{wallet.name}</p>
-                      <p className="text-xs text-muted-foreground/80 mt-0.5">{wallet.description}</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </TabsContent>
         </Tabs>
