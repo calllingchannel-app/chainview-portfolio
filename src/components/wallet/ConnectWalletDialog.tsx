@@ -52,24 +52,35 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     try {
       let connector;
       
-      // Find the correct connector
-      if (connectorType === 'walletconnect') {
+      if (connectorType === 'coinbase') {
+        connector = connectors.find(c => c.id === 'coinbaseWalletSDK' || c.id === 'coinbaseWallet');
+        if (!connector) {
+          throw new Error('Coinbase Wallet connector not available');
+        }
+      } else if (connectorType === 'walletconnect') {
         if (!WALLETCONNECT_ENABLED) {
-          throw new Error(`WalletConnect not configured. Add VITE_WC_PROJECT_ID to connect ${walletName}.`);
+          throw new Error(`To connect ${walletName}, add VITE_WC_PROJECT_ID to your environment variables. Get one free at cloud.walletconnect.com`);
         }
         connector = connectors.find(c => c.id === 'walletConnect');
-      } else if (connectorType === 'coinbase') {
-        connector = connectors.find(c => c.id === 'coinbaseWalletSDK' || c.id === 'coinbaseWallet');
+        if (!connector) {
+          throw new Error('WalletConnect not configured');
+        }
       } else {
-        // Injected - works for MetaMask, Trust, Rainbow, OKX, etc.
+        // For injected (MetaMask only) - check if MetaMask is actually installed
+        const isMetaMaskInstalled = typeof window !== 'undefined' && 
+          (window as any).ethereum?.isMetaMask && 
+          !(window as any).ethereum?.isBraveWallet;
+        
+        if (!isMetaMaskInstalled) {
+          throw new Error('MetaMask is not installed. Please install the MetaMask browser extension.');
+        }
         connector = connectors.find(c => c.id === 'injected');
+        if (!connector) {
+          throw new Error('MetaMask connector not available');
+        }
       }
 
-      if (!connector) {
-        throw new Error(`${walletName} not available. Install the wallet extension or use WalletConnect.`);
-      }
-
-      console.log(`Connecting with connector: ${connector.id} for ${walletName}`);
+      console.log(`Connecting ${walletName} with connector: ${connector.id}`);
       const result = await connectAsync({ connector });
       const address = result.accounts[0];
       
@@ -87,7 +98,6 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
 
       const balances = await getAllChainBalances(address, 'evm');
       
-      // Fetch prices
       const coingeckoIds = [...new Set(balances.map(t => NATIVE_COINGECKO_IDS[t.symbol.toUpperCase()] || t.symbol.toLowerCase()))];
       const prices = await fetchPricesByIds(coingeckoIds);
       
@@ -202,9 +212,9 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   const evmWallets = [
     { name: "MetaMask", logo: metamaskLogo, description: "Browser extension", connector: "injected" as const, color: "from-orange-500/20 to-orange-600/20" },
     { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Mobile & extension", connector: "coinbase" as const, color: "from-blue-500/20 to-blue-600/20" },
-    { name: "Trust Wallet", logo: trustLogo, description: "Browser extension", connector: "injected" as const, color: "from-blue-500/20 to-cyan-500/20" },
-    { name: "Rainbow", logo: rainbowLogo, description: "Browser extension", connector: "injected" as const, color: "from-purple-500/20 to-pink-500/20" },
-    { name: "OKX Wallet", logo: okxLogo, description: "Browser extension", connector: "injected" as const, color: "from-gray-700/20 to-gray-800/20" },
+    { name: "Trust Wallet", logo: trustLogo, description: "Via WalletConnect", connector: "walletconnect" as const, color: "from-blue-500/20 to-cyan-500/20" },
+    { name: "Rainbow", logo: rainbowLogo, description: "Via WalletConnect", connector: "walletconnect" as const, color: "from-purple-500/20 to-pink-500/20" },
+    { name: "OKX Wallet", logo: okxLogo, description: "Via WalletConnect", connector: "walletconnect" as const, color: "from-gray-700/20 to-gray-800/20" },
     { name: "WalletConnect", logo: walletConnectLogo, description: "QR code scan", connector: "walletconnect" as const, color: "from-blue-400/20 to-blue-500/20" },
     { name: "Safe", logo: safeLogo, description: "Multi-sig wallet", connector: "walletconnect" as const, color: "from-green-500/20 to-emerald-500/20" },
     { name: "Ledger", logo: ledgerLogo, description: "Hardware wallet", connector: "walletconnect" as const, color: "from-gray-600/20 to-gray-700/20" },
