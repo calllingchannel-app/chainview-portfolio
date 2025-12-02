@@ -3,8 +3,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletStore } from "@/stores/walletStore";
-import { Loader2, Check } from "lucide-react";
-import { useConnect, useAccount } from "wagmi";
+import { Loader2 } from "lucide-react";
+import { useConnect } from "wagmi";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getAllChainBalances } from "@/lib/blockchainService";
 import { fetchPricesByIds } from "@/lib/priceService";
@@ -39,72 +39,87 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
   const [loadingWallet, setLoadingWallet] = useState<string | null>(null);
   
   const { connectors, connectAsync } = useConnect();
-  const { address: evmAddress } = useAccount();
-  const { wallets, select, connect: connectSolana, publicKey } = useWallet();
+  const { wallets, select, connect: connectSolana } = useWallet();
 
   const isWalletConnected = (address: string) => {
     return connectedWallets.some(w => w.address.toLowerCase() === address.toLowerCase());
   };
 
-  const handleEVMConnect = async (walletName: string, connectorType: 'injected' | 'walletconnect' | 'coinbase' | 'metamask') => {
+  const handleEVMConnect = async (walletName: string, connectorType: 'injected' | 'walletconnect' | 'coinbase') => {
     if (loadingWallet) return;
     setLoadingWallet(walletName);
     
     try {
       let connector;
       
-      // Route to the correct connector based on type
-      if (connectorType === 'metamask') {
-        // Try MetaMask connector first, fallback to injected
-        connector = connectors.find(c => c.id === 'metaMask') || connectors.find(c => c.id === 'injected');
-      } else if (connectorType === 'walletconnect') {
+      // Find the correct connector
+      if (connectorType === 'walletconnect') {
         if (!WALLETCONNECT_ENABLED) {
-          throw new Error("WalletConnect is not configured. Please add your WalletConnect Project ID to connect " + walletName);
+          throw new Error(`WalletConnect not configured. Add VITE_WC_PROJECT_ID to connect ${walletName}.`);
         }
         connector = connectors.find(c => c.id === 'walletConnect');
       } else if (connectorType === 'coinbase') {
-        connector = connectors.find(c => c.id === 'coinbaseWallet');
+        connector = connectors.find(c => c.id === 'coinbaseWalletSDK' || c.id === 'coinbaseWallet');
       } else {
-        // For generic injected wallets
+        // Injected - works for MetaMask, Trust, Rainbow, OKX, etc.
         connector = connectors.find(c => c.id === 'injected');
       }
 
       if (!connector) {
-        throw new Error(`${walletName} connector not found. Make sure the wallet extension is installed.`);
+        throw new Error(`${walletName} not available. Install the wallet extension or use WalletConnect.`);
       }
 
+      console.log(`Connecting with connector: ${connector.id} for ${walletName}`);
       const result = await connectAsync({ connector });
       const address = result.accounts[0];
-      if (!address || isWalletConnected(address)) {
+      
+      if (!address) {
+        throw new Error("No address returned from wallet");
+      }
+      
+      if (isWalletConnected(address)) {
+        toast({ title: "Already connected", description: `This wallet is already connected` });
         setLoadingWallet(null);
         return;
       }
 
+      toast({ title: "Fetching balances...", description: "Getting your token balances" });
+
       const balances = await getAllChainBalances(address, 'evm');
-      const coingeckoIds = new Set(balances.map(t => NATIVE_COINGECKO_IDS[t.symbol.toUpperCase()] || t.symbol.toLowerCase()));
-      const prices = await fetchPricesByIds(Array.from(coingeckoIds));
       
-      const balancesWithPrices = balances.map(b => ({
-        ...b,
-        priceUsd: prices[NATIVE_COINGECKO_IDS[b.symbol.toUpperCase()] || b.symbol.toLowerCase()] || 0,
-        usdValue: parseFloat(b.balance) * (prices[NATIVE_COINGECKO_IDS[b.symbol.toUpperCase()] || b.symbol.toLowerCase()] || 0)
-      }));
+      // Fetch prices
+      const coingeckoIds = [...new Set(balances.map(t => NATIVE_COINGECKO_IDS[t.symbol.toUpperCase()] || t.symbol.toLowerCase()))];
+      const prices = await fetchPricesByIds(coingeckoIds);
+      
+      const balancesWithPrices = balances.map(b => {
+        const priceId = NATIVE_COINGECKO_IDS[b.symbol.toUpperCase()] || b.symbol.toLowerCase();
+        const price = prices[priceId] || 0;
+        return {
+          ...b,
+          priceUsd: price,
+          usdValue: parseFloat(b.balance) * price
+        };
+      });
 
       addWallet({
         id: `${walletName}-${Date.now()}`,
         address,
         name: walletName,
-        chain: 'ethereum',
+        chain: 'multi-chain',
         type: 'evm',
         connectedAt: Date.now(),
         balances: balancesWithPrices,
         totalUsdValue: balancesWithPrices.reduce((sum, b) => sum + b.usdValue, 0),
       });
 
-      toast({ title: "Success", description: `Connected ${walletName}` });
+      toast({ title: "Wallet Connected", description: `${walletName} connected successfully` });
       onOpenChange(false);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Connection failed", variant: "destructive" });
+      console.error('EVM connection error:', error);
+      const message = error.message?.includes('User rejected') 
+        ? 'Connection cancelled by user' 
+        : error.message || "Connection failed";
+      toast({ title: "Connection Failed", description: message, variant: "destructive" });
     } finally {
       setLoadingWallet(null);
     }
@@ -116,28 +131,49 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
 
     try {
       if (!walletEntry) {
-        throw new Error(`${walletName} wallet not available in this browser`);
+        throw new Error(`${walletName} not installed. Please install the browser extension.`);
       }
 
-      const adapter: any = walletEntry.adapter as any;
+      const adapter = walletEntry.adapter;
 
-      // Select and connect the chosen Solana wallet
-      select(adapter.name as any);
-      await connectSolana();
+      // Select and connect
+      select(adapter.name);
+      
+      // Wait for adapter to connect
+      if (!adapter.connected) {
+        await adapter.connect();
+      }
 
       const pubkey = adapter.publicKey;
       if (!pubkey) {
-        throw new Error("Failed to get Solana wallet address");
+        throw new Error("Failed to get wallet address. Please try again.");
       }
 
       const address = pubkey.toBase58();
+      
       if (isWalletConnected(address)) {
-        toast({ title: "Already connected", description: `${walletName} is already connected` });
+        toast({ title: "Already connected", description: "This wallet is already connected" });
         setLoadingWallet(null);
         return;
       }
 
+      toast({ title: "Fetching balances...", description: "Getting your SOL and token balances" });
+
       const balances = await getAllChainBalances(address, "solana");
+      
+      // Fetch prices
+      const coingeckoIds = [...new Set(balances.map(t => NATIVE_COINGECKO_IDS[t.symbol.toUpperCase()] || t.symbol.toLowerCase()))];
+      const prices = await fetchPricesByIds(coingeckoIds);
+      
+      const balancesWithPrices = balances.map(b => {
+        const priceId = NATIVE_COINGECKO_IDS[b.symbol.toUpperCase()] || b.symbol.toLowerCase();
+        const price = prices[priceId] || 0;
+        return {
+          ...b,
+          priceUsd: price,
+          usdValue: parseFloat(b.balance) * price
+        };
+      });
 
       addWallet({
         id: `${walletName}-${Date.now()}`,
@@ -145,30 +181,34 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         name: walletName,
         type: "solana",
         chain: "solana",
-        balances,
-        totalUsdValue: balances.reduce((sum, b) => sum + b.usdValue, 0),
+        balances: balancesWithPrices,
+        totalUsdValue: balancesWithPrices.reduce((sum, b) => sum + b.usdValue, 0),
         connectedAt: Date.now(),
       });
 
-      toast({ title: "Success", description: `Connected ${walletName}` });
+      toast({ title: "Wallet Connected", description: `${walletName} connected successfully` });
       onOpenChange(false);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Connection failed", variant: "destructive" });
+      console.error('Solana connection error:', error);
+      const message = error.message?.includes('User rejected') 
+        ? 'Connection cancelled by user' 
+        : error.message || "Connection failed";
+      toast({ title: "Connection Failed", description: message, variant: "destructive" });
     } finally {
       setLoadingWallet(null);
     }
   };
 
   const evmWallets = [
-    { name: "MetaMask", logo: metamaskLogo, description: "Most popular browser wallet", connector: "metamask" as const, color: "from-orange-500/20 to-orange-600/20" },
-    { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Secure non-custodial wallet", connector: "coinbase" as const, color: "from-blue-500/20 to-blue-600/20" },
-    { name: "Trust Wallet", logo: trustLogo, description: "Connect via WalletConnect", connector: "walletconnect" as const, color: "from-blue-500/20 to-cyan-500/20" },
-    { name: "Rainbow", logo: rainbowLogo, description: "Connect via WalletConnect", connector: "walletconnect" as const, color: "from-purple-500/20 to-pink-500/20" },
-    { name: "WalletConnect", logo: walletConnectLogo, description: "Scan QR with any wallet", connector: "walletconnect" as const, color: "from-blue-400/20 to-blue-500/20" },
-    { name: "Safe", logo: safeLogo, description: "Multi-sig via WalletConnect", connector: "walletconnect" as const, color: "from-green-500/20 to-emerald-500/20" },
-    { name: "Ledger", logo: ledgerLogo, description: "Hardware via WalletConnect", connector: "walletconnect" as const, color: "from-gray-600/20 to-gray-700/20" },
-    { name: "Trezor", logo: trezorLogo, description: "Hardware via WalletConnect", connector: "walletconnect" as const, color: "from-green-600/20 to-teal-600/20" },
-    { name: "OKX Wallet", logo: okxLogo, description: "Connect via WalletConnect", connector: "walletconnect" as const, color: "from-gray-700/20 to-gray-800/20" },
+    { name: "MetaMask", logo: metamaskLogo, description: "Browser extension", connector: "injected" as const, color: "from-orange-500/20 to-orange-600/20" },
+    { name: "Coinbase Wallet", logo: coinbaseLogo, description: "Mobile & extension", connector: "coinbase" as const, color: "from-blue-500/20 to-blue-600/20" },
+    { name: "Trust Wallet", logo: trustLogo, description: "Browser extension", connector: "injected" as const, color: "from-blue-500/20 to-cyan-500/20" },
+    { name: "Rainbow", logo: rainbowLogo, description: "Browser extension", connector: "injected" as const, color: "from-purple-500/20 to-pink-500/20" },
+    { name: "OKX Wallet", logo: okxLogo, description: "Browser extension", connector: "injected" as const, color: "from-gray-700/20 to-gray-800/20" },
+    { name: "WalletConnect", logo: walletConnectLogo, description: "QR code scan", connector: "walletconnect" as const, color: "from-blue-400/20 to-blue-500/20" },
+    { name: "Safe", logo: safeLogo, description: "Multi-sig wallet", connector: "walletconnect" as const, color: "from-green-500/20 to-emerald-500/20" },
+    { name: "Ledger", logo: ledgerLogo, description: "Hardware wallet", connector: "walletconnect" as const, color: "from-gray-600/20 to-gray-700/20" },
+    { name: "Trezor", logo: trezorLogo, description: "Hardware wallet", connector: "walletconnect" as const, color: "from-green-600/20 to-teal-600/20" },
   ];
 
   const solanaWallets = [
