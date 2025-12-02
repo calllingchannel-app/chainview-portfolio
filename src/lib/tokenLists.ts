@@ -63,7 +63,26 @@ export const SOLANA_TOKENS: TokenInfo[] = [
   { address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', symbol: 'BONK', name: 'Bonk', decimals: 5, coingeckoId: 'bonk' },
 ];
 
+// Symbol to CoinGecko ID mapping
 export const NATIVE_COINGECKO_IDS: Record<string, string> = {
+  ETH: 'ethereum',
+  WETH: 'weth',
+  MATIC: 'matic-network',
+  BNB: 'binancecoin',
+  AVAX: 'avalanche-2',
+  SOL: 'solana',
+  USDT: 'tether',
+  USDC: 'usd-coin',
+  DAI: 'dai',
+  WBTC: 'wrapped-bitcoin',
+  LINK: 'chainlink',
+  AAVE: 'aave',
+  UNI: 'uniswap',
+  ARB: 'arbitrum',
+};
+
+// Chain name to native token CoinGecko ID
+export const CHAIN_NATIVE_IDS: Record<string, string> = {
   ethereum: 'ethereum',
   polygon: 'matic-network',
   arbitrum: 'ethereum',

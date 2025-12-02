@@ -12,16 +12,14 @@ export const config = createConfig({
     }),
     coinbaseWallet({
       appName: 'HAVX',
-      appLogoUrl: 'https://havx.app/icon.png'
     }),
-    // Only include WalletConnect if projectId is provided
     ...(projectId ? [walletConnect({ 
       projectId,
       showQrModal: true,
       metadata: {
         name: 'HAVX',
         description: 'Multi-chain crypto portfolio tracker',
-        url: 'https://havx.app',
+        url: typeof window !== 'undefined' ? window.location.origin : 'https://havx.app',
         icons: ['https://havx.app/icon.png']
       }
     })] : []),
