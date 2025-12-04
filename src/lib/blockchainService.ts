@@ -4,7 +4,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { EVM_TOKENS, SOLANA_TOKENS, type TokenInfo } from './tokenLists';
 import type { TokenBalance } from '@/stores/walletStore';
 
-// Chain configurations
+// Chain configurations with custom RPC endpoints for reliability
 const CHAINS = {
   ethereum: mainnet,
   polygon,
@@ -15,6 +15,17 @@ const CHAINS = {
   avalanche,
 };
 
+// Custom RPC endpoints for better reliability
+const RPC_URLS: Record<string, string> = {
+  ethereum: 'https://eth.llamarpc.com',
+  polygon: 'https://polygon.llamarpc.com',
+  arbitrum: 'https://arbitrum.llamarpc.com',
+  optimism: 'https://optimism.llamarpc.com',
+  base: 'https://base.llamarpc.com',
+  bsc: 'https://bsc-dataseed1.binance.org',
+  avalanche: 'https://api.avax.network/ext/bc/C/rpc',
+};
+
 const ERC20_ABI = parseAbi([
   'function balanceOf(address) view returns (uint256)',
   'function decimals() view returns (uint8)',
@@ -22,19 +33,22 @@ const ERC20_ABI = parseAbi([
   'function name() view returns (string)',
 ]);
 
-// Create viem clients with timeout
+// Create viem clients with proper RPC and timeout
 function createClient(chainName: keyof typeof CHAINS) {
+  const rpcUrl = RPC_URLS[chainName];
   return createPublicClient({
     chain: CHAINS[chainName],
-    transport: http(undefined, { timeout: 10_000 }),
+    transport: http(rpcUrl, { 
+      timeout: 12_000,
+      retryCount: 2,
+      retryDelay: 1000
+    }),
   });
 }
 
 // Solana RPC with resilient fallback
 const SOLANA_RPC_CANDIDATES: string[] = [
-  // Prefer Helius if provided (accept both VITE_ and non-prefixed env for safety)
-  (import.meta as any).env?.VITE_HELIUS_RPC_URL || (import.meta as any).env?.HELIUS_RPC_URL || '',
-  'https://solana-mainnet.g.alchemy.com/v2/demo',
+  import.meta.env.VITE_HELIUS_RPC_URL || '',
   'https://api.mainnet-beta.solana.com',
   'https://solana.public-rpc.com',
   'https://rpc.ankr.com/solana',
@@ -44,19 +58,19 @@ async function withSolanaConnection<T>(fn: (conn: Connection) => Promise<T>): Pr
   let lastError: any;
   for (const url of SOLANA_RPC_CANDIDATES) {
     try {
-      console.log(`Attempting Solana RPC: ${url.substring(0, 30)}...`);
-      const conn = new Connection(url, { commitment: 'confirmed' });
+      const conn = new Connection(url, { 
+        commitment: 'confirmed',
+        confirmTransactionInitialTimeout: 10000
+      });
       const result = await fn(conn);
-      console.log(`✅ Solana RPC success: ${url.substring(0, 30)}...`);
       return result;
     } catch (err) {
       lastError = err;
-      console.warn(`❌ Solana RPC failed for ${url.substring(0, 30)}...`, err);
+      console.warn(`Solana RPC failed: ${url.substring(0, 40)}...`);
       continue;
     }
   }
-  console.error('🚨 All Solana RPC endpoints failed. Last error:', lastError);
-  throw new Error(`All Solana RPC endpoints failed. Last error: ${lastError?.message || 'Unknown error'}`);
+  throw new Error(`All Solana RPC endpoints failed: ${lastError?.message || 'Unknown error'}`);
 }
 
 // Get native balance for EVM chains
@@ -123,34 +137,50 @@ export async function getEvmTokenBalances(
   return balances;
 }
 
+// Native token metadata per chain
+const NATIVE_TOKENS: Record<string, { symbol: string; name: string; decimals: number }> = {
+  ethereum: { symbol: 'ETH', name: 'Ethereum', decimals: 18 },
+  polygon: { symbol: 'MATIC', name: 'Polygon', decimals: 18 },
+  arbitrum: { symbol: 'ETH', name: 'Ethereum', decimals: 18 },
+  optimism: { symbol: 'ETH', name: 'Ethereum', decimals: 18 },
+  base: { symbol: 'ETH', name: 'Ethereum', decimals: 18 },
+  bsc: { symbol: 'BNB', name: 'BNB', decimals: 18 },
+  avalanche: { symbol: 'AVAX', name: 'Avalanche', decimals: 18 },
+};
+
 // Get all EVM balances (native + tokens) for a wallet
 export async function getAllEvmBalances(
   chainName: keyof typeof CHAINS,
   address: string
 ): Promise<TokenBalance[]> {
   const balances: TokenBalance[] = [];
+  const nativeInfo = NATIVE_TOKENS[chainName] || { symbol: 'ETH', name: 'Ethereum', decimals: 18 };
 
   try {
-    // Get native balance - ALWAYS include it, even if 0
+    // Get native balance
     const nativeBalance = await getNativeBalance(chainName, address);
-    const formatted = formatUnits(nativeBalance, 18);
+    const formatted = formatUnits(nativeBalance, nativeInfo.decimals);
+    const balanceNum = parseFloat(formatted);
     
-    console.log(`Native balance for ${chainName} ${address}: ${formatted}`);
-    
-    balances.push({
-      symbol: chainName === 'bsc' ? 'BNB' : chainName === 'polygon' ? 'MATIC' : chainName === 'avalanche' ? 'AVAX' : 'ETH',
-      name: chainName === 'bsc' ? 'BNB' : chainName === 'polygon' ? 'Polygon' : chainName === 'avalanche' ? 'Avalanche' : 'Ethereum',
-      balance: formatted,
-      decimals: 18,
-      usdValue: 0,
-      priceUsd: 0,
-      chain: chainName,
-    });
+    // Only include if balance > 0 (except we always show native for context)
+    if (balanceNum > 0.00001 || balanceNum === 0) {
+      balances.push({
+        symbol: nativeInfo.symbol,
+        name: nativeInfo.name,
+        balance: formatted,
+        decimals: nativeInfo.decimals,
+        usdValue: 0,
+        priceUsd: 0,
+        chain: chainName,
+      });
+    }
 
     // Get token balances
     const tokens = EVM_TOKENS[chainName] || [];
-    const tokenBalances = await getEvmTokenBalances(chainName, address, tokens);
-    balances.push(...tokenBalances);
+    if (tokens.length > 0) {
+      const tokenBalances = await getEvmTokenBalances(chainName, address, tokens);
+      balances.push(...tokenBalances);
+    }
 
   } catch (error) {
     console.error(`Failed to get balances for ${chainName}:`, error);
