@@ -48,6 +48,11 @@ export default function Dashboard() {
             <div className="relative">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xs text-muted-foreground/70 uppercase tracking-widest font-bold">Total Portfolio Value</h2>
+                {lastUpdated && (
+                  <span className="text-xs text-muted-foreground/50">
+                    Updated {new Date(lastUpdated).toLocaleTimeString()}
+                  </span>
+                )}
               </div>
               <div className="space-y-4">
                 <h3 className="text-7xl md:text-8xl font-bold gradient-text tracking-tighter">

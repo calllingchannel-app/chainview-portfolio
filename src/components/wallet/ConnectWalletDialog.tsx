@@ -8,7 +8,7 @@ import { useConnect, useDisconnect } from "wagmi";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getAllChainBalances } from "@/lib/blockchainService";
 import { fetchPricesByIds } from "@/lib/priceService";
-import { NATIVE_COINGECKO_IDS } from "@/lib/tokenLists";
+import { CHAIN_NATIVE_IDS, EVM_TOKENS, SOLANA_TOKENS } from "@/lib/tokenLists";
 
 // Import wallet logos
 import metamaskLogo from "@/assets/wallets/metamask.png";
@@ -115,24 +115,88 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     return connectedWallets.some(w => w.address.toLowerCase() === address.toLowerCase());
   };
 
+  // Chain-based native token ID lookup
+  const NATIVE_TOKEN_IDS: Record<string, string> = {
+    ethereum: 'ethereum',
+    polygon: 'matic-network',
+    arbitrum: 'ethereum',
+    optimism: 'ethereum',
+    base: 'ethereum',
+    bsc: 'binancecoin',
+    avalanche: 'avalanche-2',
+    solana: 'solana',
+  };
+
+  // Symbol to CoinGecko ID mapping
+  const SYMBOL_TO_COINGECKO: Record<string, string> = {
+    ETH: 'ethereum',
+    WETH: 'weth',
+    MATIC: 'matic-network',
+    BNB: 'binancecoin',
+    AVAX: 'avalanche-2',
+    SOL: 'solana',
+    USDT: 'tether',
+    USDC: 'usd-coin',
+    DAI: 'dai',
+    WBTC: 'wrapped-bitcoin',
+    LINK: 'chainlink',
+    AAVE: 'aave',
+    UNI: 'uniswap',
+    ARB: 'arbitrum',
+  };
+
   const fetchAndStoreBalances = async (address: string, walletName: string, walletType: 'evm' | 'solana') => {
     toast({ title: "Fetching balances...", description: "Getting your real-time token balances" });
 
     const balances = await getAllChainBalances(address, walletType);
-    console.log(`[${walletName}] Fetched ${balances.length} balances:`, balances);
+    console.log(`[${walletName}] Fetched ${balances.length} balances`);
     
-    // Get unique coingecko IDs for price fetching
-    const coingeckoIds = [...new Set(balances.map(t => 
-      NATIVE_COINGECKO_IDS[t.symbol.toUpperCase()] || t.symbol.toLowerCase()
-    ))];
+    // Collect all unique CoinGecko IDs for price fetching
+    const coingeckoIds = new Set<string>();
     
-    const prices = await fetchPricesByIds(coingeckoIds);
-    console.log('[Prices] Fetched:', prices);
+    balances.forEach((token) => {
+      // Native tokens - use chain-based lookup
+      if (!token.contractAddress) {
+        const nativeId = NATIVE_TOKEN_IDS[token.chain];
+        if (nativeId) coingeckoIds.add(nativeId);
+      } else if (token.chain === 'solana') {
+        const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
+        if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
+      } else {
+        const chainTokens = EVM_TOKENS[token.chain];
+        const info = chainTokens?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
+        if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
+      }
+      
+      // Also try symbol-based lookup as fallback
+      const symbolId = SYMBOL_TO_COINGECKO[token.symbol.toUpperCase()];
+      if (symbolId) coingeckoIds.add(symbolId);
+    });
+    
+    const prices = await fetchPricesByIds(Array.from(coingeckoIds));
+    console.log('[Prices] Fetched:', Object.keys(prices).length);
     
     // Apply prices to balances
     const balancesWithPrices = balances.map(b => {
-      const priceId = NATIVE_COINGECKO_IDS[b.symbol.toUpperCase()] || b.symbol.toLowerCase();
-      const price = prices[priceId] || 0;
+      let priceId: string | undefined;
+      
+      if (!b.contractAddress) {
+        priceId = NATIVE_TOKEN_IDS[b.chain];
+      } else if (b.chain === 'solana') {
+        const info = SOLANA_TOKENS.find((t) => t.address === b.contractAddress);
+        priceId = info?.coingeckoId;
+      } else {
+        const chainTokens = EVM_TOKENS[b.chain];
+        const info = chainTokens?.find((t) => t.address.toLowerCase() === b.contractAddress?.toLowerCase());
+        priceId = info?.coingeckoId;
+      }
+      
+      // Fallback to symbol lookup
+      if (!priceId || !prices[priceId]) {
+        priceId = SYMBOL_TO_COINGECKO[b.symbol.toUpperCase()];
+      }
+
+      const price = priceId ? (prices[priceId] || 0) : 0;
       const balanceNum = parseFloat(b.balance) || 0;
       return {
         ...b,
