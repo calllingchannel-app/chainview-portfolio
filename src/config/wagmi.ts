@@ -7,12 +7,16 @@ const projectId = import.meta.env.VITE_WC_PROJECT_ID;
 export const config = createConfig({
   chains: [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche],
   connectors: [
+    // MetaMask and other browser extensions
     injected({
       shimDisconnect: true,
     }),
+    // Coinbase Wallet
     coinbaseWallet({
       appName: 'HAVX',
+      headlessMode: false,
     }),
+    // WalletConnect v2 (only if project ID is provided)
     ...(projectId ? [walletConnect({ 
       projectId,
       showQrModal: true,
@@ -25,12 +29,12 @@ export const config = createConfig({
     })] : []),
   ],
   transports: {
-    [mainnet.id]: http(),
-    [polygon.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-    [base.id]: http(),
-    [bsc.id]: http(),
-    [avalanche.id]: http(),
+    [mainnet.id]: http('https://eth.llamarpc.com'),
+    [polygon.id]: http('https://polygon.llamarpc.com'),
+    [arbitrum.id]: http('https://arbitrum.llamarpc.com'),
+    [optimism.id]: http('https://optimism.llamarpc.com'),
+    [base.id]: http('https://base.llamarpc.com'),
+    [bsc.id]: http('https://bsc-dataseed1.binance.org'),
+    [avalanche.id]: http('https://api.avax.network/ext/bc/C/rpc'),
   },
 });
