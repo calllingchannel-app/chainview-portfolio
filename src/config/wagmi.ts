@@ -2,12 +2,12 @@ import { createConfig, http } from 'wagmi';
 import { mainnet, polygon, arbitrum, optimism, base, bsc, avalanche } from 'wagmi/chains';
 import { walletConnect, injected, coinbaseWallet } from 'wagmi/connectors';
 
-const projectId = import.meta.env.VITE_WC_PROJECT_ID;
+const projectId = import.meta.env.VITE_WC_PROJECT_ID || '42a39d25d06085beb92409bac1149989';
 
 export const config = createConfig({
   chains: [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche],
   connectors: [
-    // MetaMask and other browser extensions
+    // Injected connector for browser extensions (MetaMask, Rabby, Brave, etc.)
     injected({
       shimDisconnect: true,
     }),
@@ -16,8 +16,8 @@ export const config = createConfig({
       appName: 'HAVX',
       headlessMode: false,
     }),
-    // WalletConnect v2 (only if project ID is provided)
-    ...(projectId ? [walletConnect({ 
+    // WalletConnect v2
+    walletConnect({ 
       projectId,
       showQrModal: true,
       metadata: {
@@ -26,7 +26,7 @@ export const config = createConfig({
         url: typeof window !== 'undefined' ? window.location.origin : 'https://havx.app',
         icons: ['https://havx.app/icon.png']
       }
-    })] : []),
+    }),
   ],
   transports: {
     [mainnet.id]: http('https://eth.llamarpc.com'),
