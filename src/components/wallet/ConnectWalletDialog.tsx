@@ -38,67 +38,91 @@ function getInstalledWallets() {
   }
 
   const ethereum = (window as any).ethereum;
-  const providers = ethereum?.providers || [ethereum];
+  const providers = ethereum?.providers || [];
   
-  // Check for specific providers in the providers array or main ethereum object
-  const hasProvider = (check: (p: any) => boolean) => {
-    if (Array.isArray(providers)) {
+  // Check all providers
+  const checkProviders = (check: (p: any) => boolean): boolean => {
+    if (Array.isArray(providers) && providers.length > 0) {
       return providers.some(check);
     }
     return check(ethereum);
   };
 
   return {
-    metamask: hasProvider(p => p?.isMetaMask && !p?.isBraveWallet && !p?.isTrust),
+    metamask: checkProviders(p => p?.isMetaMask && !p?.isBraveWallet && !p?.isTrust && !p?.isRabby),
     coinbase: Boolean(ethereum?.isCoinbaseWallet || (window as any).coinbaseWalletExtension),
-    trust: hasProvider(p => p?.isTrust || p?.isTrustWallet),
-    rabby: hasProvider(p => p?.isRabby),
-    brave: hasProvider(p => p?.isBraveWallet),
-    okx: Boolean(ethereum?.isOkxWallet || (window as any).okxwallet),
+    trust: checkProviders(p => p?.isTrust || p?.isTrustWallet),
+    rabby: checkProviders(p => p?.isRabby),
+    brave: checkProviders(p => p?.isBraveWallet),
+    okx: Boolean((window as any).okxwallet || ethereum?.isOkxWallet),
     phantom: Boolean((window as any).phantom?.ethereum),
   };
 }
 
-// Get the correct provider for a specific wallet
+// Get the specific provider for a wallet type
 function getSpecificProvider(walletType: string): any {
   if (typeof window === 'undefined') return null;
   
   const ethereum = (window as any).ethereum;
-  const providers = ethereum?.providers || [];
+  const providers: any[] = ethereum?.providers || [];
   
+  const findProvider = (check: (p: any) => boolean): any => {
+    if (Array.isArray(providers) && providers.length > 0) {
+      return providers.find(check);
+    }
+    return check(ethereum) ? ethereum : null;
+  };
+
   switch (walletType) {
     case 'metamask':
-      if (Array.isArray(providers)) {
-        return providers.find((p: any) => p?.isMetaMask && !p?.isBraveWallet && !p?.isTrust);
-      }
-      return ethereum?.isMetaMask ? ethereum : null;
+      // MetaMask specific - avoid other wallets
+      return findProvider(p => p?.isMetaMask && !p?.isBraveWallet && !p?.isTrust && !p?.isRabby);
     case 'coinbase':
-      return (window as any).coinbaseWalletExtension || 
-             (Array.isArray(providers) ? providers.find((p: any) => p?.isCoinbaseWallet) : 
-              ethereum?.isCoinbaseWallet ? ethereum : null);
+      return (window as any).coinbaseWalletExtension || findProvider(p => p?.isCoinbaseWallet);
     case 'trust':
-      if (Array.isArray(providers)) {
-        return providers.find((p: any) => p?.isTrust || p?.isTrustWallet);
-      }
-      return ethereum?.isTrust ? ethereum : null;
+      return findProvider(p => p?.isTrust || p?.isTrustWallet);
     case 'rabby':
-      if (Array.isArray(providers)) {
-        return providers.find((p: any) => p?.isRabby);
-      }
-      return ethereum?.isRabby ? ethereum : null;
+      return findProvider(p => p?.isRabby);
     case 'brave':
-      if (Array.isArray(providers)) {
-        return providers.find((p: any) => p?.isBraveWallet);
-      }
-      return ethereum?.isBraveWallet ? ethereum : null;
+      return findProvider(p => p?.isBraveWallet);
     case 'okx':
-      return (window as any).okxwallet || ethereum?.isOkxWallet ? ethereum : null;
+      return (window as any).okxwallet || findProvider(p => p?.isOkxWallet);
     case 'phantom':
       return (window as any).phantom?.ethereum;
     default:
       return ethereum;
   }
 }
+
+// Chain-based native token ID lookup
+const NATIVE_TOKEN_IDS: Record<string, string> = {
+  ethereum: 'ethereum',
+  polygon: 'matic-network',
+  arbitrum: 'ethereum',
+  optimism: 'ethereum',
+  base: 'ethereum',
+  bsc: 'binancecoin',
+  avalanche: 'avalanche-2',
+  solana: 'solana',
+};
+
+// Symbol to CoinGecko ID mapping
+const SYMBOL_TO_COINGECKO: Record<string, string> = {
+  ETH: 'ethereum',
+  WETH: 'weth',
+  MATIC: 'matic-network',
+  BNB: 'binancecoin',
+  AVAX: 'avalanche-2',
+  SOL: 'solana',
+  USDT: 'tether',
+  USDC: 'usd-coin',
+  DAI: 'dai',
+  WBTC: 'wrapped-bitcoin',
+  LINK: 'chainlink',
+  AAVE: 'aave',
+  UNI: 'uniswap',
+  ARB: 'arbitrum',
+};
 
 export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogProps) {
   const { toast } = useToast();
@@ -113,36 +137,6 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
 
   const isWalletConnected = (address: string) => {
     return connectedWallets.some(w => w.address.toLowerCase() === address.toLowerCase());
-  };
-
-  // Chain-based native token ID lookup
-  const NATIVE_TOKEN_IDS: Record<string, string> = {
-    ethereum: 'ethereum',
-    polygon: 'matic-network',
-    arbitrum: 'ethereum',
-    optimism: 'ethereum',
-    base: 'ethereum',
-    bsc: 'binancecoin',
-    avalanche: 'avalanche-2',
-    solana: 'solana',
-  };
-
-  // Symbol to CoinGecko ID mapping
-  const SYMBOL_TO_COINGECKO: Record<string, string> = {
-    ETH: 'ethereum',
-    WETH: 'weth',
-    MATIC: 'matic-network',
-    BNB: 'binancecoin',
-    AVAX: 'avalanche-2',
-    SOL: 'solana',
-    USDT: 'tether',
-    USDC: 'usd-coin',
-    DAI: 'dai',
-    WBTC: 'wrapped-bitcoin',
-    LINK: 'chainlink',
-    AAVE: 'aave',
-    UNI: 'uniswap',
-    ARB: 'arbitrum',
   };
 
   const fetchAndStoreBalances = async (address: string, walletName: string, walletType: 'evm' | 'solana') => {
@@ -221,28 +215,37 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     return totalUsdValue;
   };
 
-  // Connect using browser extension (injected provider)
-  const connectInjected = async (walletName: string, providerType: string) => {
+  // Connect using browser extension directly
+  const connectInjected = async (walletName: string, providerType: string): Promise<string> => {
     const provider = getSpecificProvider(providerType);
+    
     if (!provider) {
       throw new Error(`${walletName} is not installed. Please install the browser extension.`);
     }
 
+    console.log(`[${walletName}] Requesting accounts from provider...`);
+    
     // Request accounts directly from the specific provider
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    
     if (!accounts || accounts.length === 0) {
       throw new Error('No accounts returned from wallet');
     }
+    
+    console.log(`[${walletName}] Got account: ${accounts[0]}`);
     return accounts[0];
   };
 
   // Connect using wagmi connector
-  const connectWagmi = async (connectorId: string) => {
+  const connectWagmi = async (connectorId: string): Promise<string> => {
     const connector = connectors.find(c => c.id === connectorId);
     if (!connector) {
       throw new Error(`Connector ${connectorId} not found`);
     }
     
+    console.log(`[wagmi] Connecting with connector: ${connectorId}`);
+    
+    // Disconnect any existing connection first
     try {
       await disconnectAsync();
     } catch (e) {
@@ -250,6 +253,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     }
     
     const result = await connectAsync({ connector });
+    console.log(`[wagmi] Connected: ${result.accounts[0]}`);
     return result.accounts[0];
   };
 
@@ -260,14 +264,18 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     try {
       let address: string;
 
-      // Route to correct connection method
-      if (wallet.connectionType === 'injected') {
-        address = await connectInjected(wallet.name, wallet.providerKey);
-      } else if (wallet.connectionType === 'coinbase') {
-        address = await connectWagmi('coinbaseWalletSDK');
-      } else {
-        // WalletConnect
-        address = await connectWagmi('walletConnect');
+      // Route to correct connection method based on wallet type
+      switch (wallet.connectionType) {
+        case 'injected':
+          address = await connectInjected(wallet.name, wallet.providerKey);
+          break;
+        case 'coinbase':
+          address = await connectWagmi('coinbaseWalletSDK');
+          break;
+        case 'walletconnect':
+        default:
+          address = await connectWagmi('walletConnect');
+          break;
       }
       
       if (!address) {
@@ -317,7 +325,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
     setLoadingWallet(walletName);
 
     try {
-      // Find the wallet adapter
+      // Find the wallet adapter by name
       const walletAdapter = solanaWalletAdapters.find(w => 
         w.adapter.name.toLowerCase().includes(walletName.toLowerCase())
       );
@@ -327,7 +335,12 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       }
 
       const adapter = walletAdapter.adapter;
-      console.log(`[${walletName}] Connecting via adapter: ${adapter.name}`);
+      console.log(`[${walletName}] Connecting via adapter: ${adapter.name}, readyState: ${walletAdapter.readyState}`);
+
+      // Check if installed
+      if (walletAdapter.readyState !== 'Installed') {
+        throw new Error(`${walletName} is not installed. Please install the browser extension.`);
+      }
 
       // Disconnect existing if any
       try {
@@ -336,12 +349,11 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
         // Ignore
       }
 
-      // Select and connect
+      // Select the wallet first
       select(adapter.name);
       
-      if (!adapter.connected) {
-        await adapter.connect();
-      }
+      // Then connect
+      await adapter.connect();
 
       const pubkey = adapter.publicKey;
       if (!pubkey) {
@@ -422,7 +434,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       connectionType: installed.trust ? "injected" : "walletconnect",
       providerKey: "trust",
       color: "from-blue-500/20 to-cyan-500/20",
-      available: installed.trust || true
+      available: true
     },
     { 
       name: "Rabby", 
@@ -449,7 +461,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
       connectionType: installed.okx ? "injected" : "walletconnect",
       providerKey: "okx",
       color: "from-gray-700/20 to-gray-800/20",
-      available: installed.okx || true
+      available: true
     },
     { 
       name: "Rainbow", 
@@ -568,7 +580,7 @@ export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogP
                   w.adapter.name.toLowerCase().includes(wallet.name.toLowerCase())
                 );
                 const isLoading = loadingWallet === wallet.name;
-                const isInstalled = Boolean(walletAdapter?.readyState === 'Installed');
+                const isInstalled = walletAdapter?.readyState === 'Installed';
                 const isDisabled = !isInstalled || (loadingWallet !== null && !isLoading);
 
                 return (

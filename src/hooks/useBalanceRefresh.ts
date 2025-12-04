@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useWalletStore } from '@/stores/walletStore';
 import { getAllChainBalances } from '@/lib/blockchainService';
 import { fetchPricesByIds } from '@/lib/priceService';
-import { CHAIN_NATIVE_IDS, EVM_TOKENS, SOLANA_TOKENS } from '@/lib/tokenLists';
+import { EVM_TOKENS, SOLANA_TOKENS } from '@/lib/tokenLists';
 
 // Map chain names to their native token CoinGecko IDs
 const NATIVE_TOKEN_IDS: Record<string, string> = {
@@ -66,11 +66,9 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
               const nativeId = NATIVE_TOKEN_IDS[token.chain];
               if (nativeId) coingeckoIds.add(nativeId);
             } else if (token.chain === 'solana') {
-              // Solana SPL tokens
               const info = SOLANA_TOKENS.find((t) => t.address === token.contractAddress);
               if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
             } else {
-              // EVM tokens
               const chainTokens = EVM_TOKENS[token.chain];
               const info = chainTokens?.find((t) => t.address.toLowerCase() === token.contractAddress?.toLowerCase());
               if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
@@ -81,10 +79,9 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
             if (symbolId) coingeckoIds.add(symbolId);
           });
 
-          console.log(`💰 Fetching prices for ${coingeckoIds.size} tokens...`);
-          
           let prices: Record<string, number> = {};
           if (coingeckoIds.size > 0) {
+            console.log(`💰 Fetching prices for ${coingeckoIds.size} tokens...`);
             prices = await fetchPricesByIds(Array.from(coingeckoIds));
             console.log('📊 Prices fetched:', Object.keys(prices).length);
           }
