@@ -41,9 +41,11 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
   const { connectedWallets, updateWalletBalances, setTotalPortfolioUSD, setLastUpdated, setLoading } = useWalletStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
+  const isVisibleRef = useRef(true);
 
   const refreshAllWallets = useCallback(async () => {
-    if (connectedWallets.length === 0 || isRefreshingRef.current) return;
+    // Only refresh if page is visible and not already refreshing
+    if (connectedWallets.length === 0 || isRefreshingRef.current || !isVisibleRef.current) return;
     
     isRefreshingRef.current = true;
     setLoading(true);
@@ -118,8 +120,10 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
           });
 
           updateWalletBalances(wallet.id, balancesWithPrices);
+          return { success: true, walletId: wallet.id };
         } catch (error) {
           console.error(`❌ Failed to refresh wallet ${wallet.name}:`, error);
+          return { success: false, walletId: wallet.id, error };
         }
       });
 
@@ -139,6 +143,22 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
       setLoading(false);
     }
   }, [connectedWallets, updateWalletBalances, setTotalPortfolioUSD, setLastUpdated, setLoading]);
+
+  // Handle page visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isVisibleRef.current = document.visibilityState === 'visible';
+      console.log(`👁️ Page visibility: ${isVisibleRef.current ? 'visible' : 'hidden'}`);
+      
+      // Refresh immediately when becoming visible
+      if (isVisibleRef.current && connectedWallets.length > 0) {
+        refreshAllWallets();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [connectedWallets.length, refreshAllWallets]);
 
   useEffect(() => {
     if (connectedWallets.length === 0) {
