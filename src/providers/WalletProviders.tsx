@@ -7,12 +7,6 @@ import {
   WalletProvider,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import { 
-  PhantomWalletAdapter, 
-  SolflareWalletAdapter,
-  Coin98WalletAdapter,
-  TrustWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
 import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { GlowWalletAdapter } from '@solana/wallet-adapter-glow';
 import { clusterApiUrl } from '@solana/web3.js';
@@ -33,15 +27,12 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     return heliusUrl || clusterApiUrl('mainnet-beta');
   }, []);
 
-  // Only include wallets that don't require native dependencies (no USB/hardware)
+  // Only include adapters that don't require native USB dependencies
+  // Phantom, Solflare, Trust, Coin98 are auto-detected via wallet-standard
   const wallets = useMemo(
     () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
       new BackpackWalletAdapter(),
       new GlowWalletAdapter(),
-      new Coin98WalletAdapter(),
-      new TrustWalletAdapter(),
     ],
     []
   );
