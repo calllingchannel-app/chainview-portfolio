@@ -15,7 +15,6 @@ import {
 } from '@solana/wallet-adapter-wallets';
 import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { GlowWalletAdapter } from '@solana/wallet-adapter-glow';
-import { SlopeWalletAdapter } from '@solana/wallet-adapter-slope';
 import { clusterApiUrl } from '@solana/web3.js';
 
 // Import Solana wallet adapter styles
@@ -34,13 +33,13 @@ export function WalletProviders({ children }: WalletProvidersProps) {
     return heliusUrl || clusterApiUrl('mainnet-beta');
   }, []);
 
+  // Only include wallets that don't require native dependencies (no USB/hardware)
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
       new BackpackWalletAdapter(),
       new GlowWalletAdapter(),
-      new SlopeWalletAdapter(),
       new Coin98WalletAdapter(),
       new TrustWalletAdapter(),
     ],
