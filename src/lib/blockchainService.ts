@@ -78,11 +78,13 @@ function createClient(chainName: keyof typeof CHAINS, rpcIndex: number = 0) {
 }
 
 // Solana RPC with fallbacks
+// For reliable production use, set VITE_HELIUS_RPC_URL with your own Helius API key
 const SOLANA_RPC_URLS = [
   import.meta.env.VITE_HELIUS_RPC_URL,
-  'https://api.mainnet-beta.solana.com',
-  'https://solana-mainnet.rpc.extrnode.com',
+  import.meta.env.VITE_SOLANA_RPC_URL,
+  'https://solana-mainnet.g.alchemy.com/v2/demo', // Alchemy demo
   'https://rpc.ankr.com/solana',
+  'https://api.mainnet-beta.solana.com',
 ].filter(Boolean) as string[];
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -92,22 +94,40 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([promise, timeout]);
 }
 
+// Cache the working Solana connection
+let cachedSolanaConnection: Connection | null = null;
+let cachedSolanaRpcUrl: string | null = null;
+let lastConnectionAttempt = 0;
+
 async function getSolanaConnection(): Promise<Connection> {
+  const now = Date.now();
+  
+  // Reuse cached connection if available and recent (60 seconds)
+  if (cachedSolanaConnection && cachedSolanaRpcUrl && (now - lastConnectionAttempt < 60000)) {
+    return cachedSolanaConnection;
+  }
+
   for (const url of SOLANA_RPC_URLS) {
     try {
       const conn = new Connection(url, {
         commitment: 'confirmed',
-        confirmTransactionInitialTimeout: 15000,
+        confirmTransactionInitialTimeout: 20000,
+        fetch: (url, options) => {
+          return fetch(url, { ...options, cache: 'no-store' });
+        },
       });
-      // Test the connection
-      await withTimeout(conn.getSlot(), 5000);
-      console.log(`✅ Solana RPC connected: ${url.substring(0, 30)}...`);
+      // Test the connection with longer timeout
+      await withTimeout(conn.getSlot(), 8000);
+      console.log(`✅ Solana RPC connected: ${url.substring(0, 50)}...`);
+      cachedSolanaConnection = conn;
+      cachedSolanaRpcUrl = url;
+      lastConnectionAttempt = now;
       return conn;
-    } catch (err) {
-      console.warn(`Solana RPC failed: ${url.substring(0, 30)}...`);
+    } catch (err: any) {
+      console.warn(`Solana RPC failed: ${url.substring(0, 50)}...`, err.message);
     }
   }
-  throw new Error('All Solana RPCs failed');
+  throw new Error('All Solana RPCs failed. For reliable Solana support, add VITE_HELIUS_RPC_URL');
 }
 
 // Native token metadata per chain
@@ -262,8 +282,11 @@ export async function getSolanaNative(address: string): Promise<number> {
     const balance = await withTimeout(conn.getBalance(publicKey), 10000);
     console.log(`✅ SOL balance: ${balance / LAMPORTS_PER_SOL} SOL`);
     return balance;
-  } catch (error) {
-    console.error('Failed to get SOL balance:', error);
+  } catch (error: any) {
+    console.error('Failed to get SOL balance:', error.message);
+    // Reset cache to try different RPC next time
+    cachedSolanaConnection = null;
+    cachedSolanaRpcUrl = null;
     return 0;
   }
 }
@@ -283,7 +306,7 @@ export async function getSolanaSPLBalances(
       conn.getParsedTokenAccountsByOwner(publicKey, {
         programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
       }),
-      15000
+      12000
     );
 
     console.log(`Found ${tokenAccounts.value.length} token accounts`);
@@ -291,7 +314,6 @@ export async function getSolanaSPLBalances(
     tokenAccounts.value.forEach((accountInfo) => {
       const parsedInfo = accountInfo.account.data.parsed.info;
       const mint = parsedInfo.mint;
-      const amount = parsedInfo.tokenAmount.amount;
       const decimals = parsedInfo.tokenAmount.decimals;
       const uiAmount = parsedInfo.tokenAmount.uiAmount;
 
@@ -313,8 +335,11 @@ export async function getSolanaSPLBalances(
     });
 
     console.log(`✅ Solana SPL tokens: ${balances.length} found`);
-  } catch (error) {
-    console.error('Failed to get Solana SPL balances:', error);
+  } catch (error: any) {
+    console.error('Failed to get Solana SPL balances:', error.message);
+    // Reset cache to try different RPC next time
+    cachedSolanaConnection = null;
+    cachedSolanaRpcUrl = null;
   }
 
   return balances;
