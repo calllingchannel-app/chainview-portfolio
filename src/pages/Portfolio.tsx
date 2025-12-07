@@ -3,7 +3,7 @@ import { Layout } from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Coins } from "lucide-react";
 import { useState } from "react";
 
 const Portfolio = () => {
@@ -11,7 +11,6 @@ const Portfolio = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChain, setSelectedChain] = useState<string>("all");
 
-  // Aggregate all tokens from all wallets
   const allTokens = connectedWallets.flatMap(wallet => 
     wallet.balances.map(token => ({
       ...token,
@@ -20,10 +19,8 @@ const Portfolio = () => {
     }))
   );
 
-  // Get unique chains
   const chains = ["all", ...Array.from(new Set(allTokens.map(t => t.chain)))];
 
-  // Filter tokens
   const filteredTokens = allTokens.filter(token => {
     const matchesSearch = token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          token.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -31,102 +28,104 @@ const Portfolio = () => {
     return matchesSearch && matchesChain;
   });
 
-  // Sort by USD value
   const sortedTokens = [...filteredTokens].sort((a, b) => b.usdValue - a.usdValue);
 
   return (
     <Layout>
-      <div className="min-h-screen p-6 md:p-10 gradient-bg">
-        <div className="container mx-auto max-w-7xl">
-        <div className="mb-12 animate-fade-in">
-          <h1 className="text-6xl md:text-7xl font-bold mb-4 gradient-text tracking-tight">Portfolio</h1>
-          <p className="text-muted-foreground/80 text-lg md:text-xl">All your tokens across connected wallets</p>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-10 flex flex-col sm:flex-row gap-4 animate-slide-up">
-          <div className="relative flex-1">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/70" />
-            <Input
-              placeholder="Search tokens by name or symbol..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-14 h-14 bg-card/50 backdrop-blur-2xl border-white/5 rounded-2xl focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all text-base"
-            />
+      <div className="min-h-screen p-4 sm:p-6 lg:p-8 gradient-bg">
+        <div className="container mx-auto max-w-6xl">
+          {/* Header */}
+          <div className="mb-8 animate-fade-in">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 gradient-text tracking-tight">Portfolio</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">All your tokens across connected wallets</p>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {chains.map(chain => (
-              <Badge
-                key={chain}
-                variant={selectedChain === chain ? "default" : "outline"}
-                className={`cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl transition-all duration-300 font-semibold ${
-                  selectedChain === chain 
-                    ? "bg-gradient-to-r from-primary to-accent text-white shadow-glow border-transparent scale-105" 
-                    : "bg-card/50 backdrop-blur-2xl border-white/5 hover:border-primary/50 hover:bg-card/70"
-                }`}
-                onClick={() => setSelectedChain(chain)}
-              >
-                {chain === "all" ? "All Chains" : chain}
-              </Badge>
-            ))}
-          </div>
-        </div>
+          {/* Filters */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-3 animate-slide-up">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tokens..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-11 h-11 bg-card/50 border-border/50 rounded-xl focus:border-primary/50 transition-colors"
+              />
+            </div>
 
-        {/* Token List */}
-        {sortedTokens.length === 0 ? (
-          <Card className="stat-card p-20 text-center">
-            <p className="text-muted-foreground/80 text-xl">
-              {connectedWallets.length === 0 
-                ? "Connect a wallet to see your portfolio"
-                : "No tokens found matching your filters"}
-            </p>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {sortedTokens.map((token, idx) => (
-              <Card 
-                key={`${token.contractAddress}-${idx}`} 
-                className="stat-card p-6 hover:neon-glow cursor-pointer group animate-fade-in relative overflow-hidden"
-                style={{ animationDelay: `${idx * 40}ms` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-6 flex-1">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                      <div className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ring-2 ring-white/5">
-                        <span className="font-bold text-2xl text-primary">{token.symbol.charAt(0)}</span>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {chains.map(chain => (
+                <Badge
+                  key={chain}
+                  variant={selectedChain === chain ? "default" : "outline"}
+                  className={`cursor-pointer whitespace-nowrap px-4 py-2 rounded-lg transition-all duration-200 font-medium ${
+                    selectedChain === chain 
+                      ? "bg-primary text-primary-foreground border-transparent" 
+                      : "bg-card/50 border-border/50 text-muted-foreground hover:text-foreground hover:border-border"
+                  }`}
+                  onClick={() => setSelectedChain(chain)}
+                >
+                  {chain === "all" ? "All Chains" : chain}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Token List */}
+          {sortedTokens.length === 0 ? (
+            <Card className="stat-card p-12 lg:p-16 text-center">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto mb-4">
+                <Coins className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-lg font-medium text-foreground mb-2">
+                {connectedWallets.length === 0 ? "No wallets connected" : "No tokens found"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {connectedWallets.length === 0 
+                  ? "Connect a wallet to see your portfolio"
+                  : "Try adjusting your search or filters"}
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {sortedTokens.map((token, idx) => (
+                <Card 
+                  key={`${token.contractAddress}-${idx}`} 
+                  className="stat-card p-4 sm:p-5 group animate-fade-in"
+                  style={{ animationDelay: `${idx * 30}ms` }}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                      {/* Token Icon */}
+                      <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <span className="font-bold text-base sm:text-lg text-primary">{token.symbol.charAt(0)}</span>
+                      </div>
+                      
+                      {/* Token Info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="font-semibold text-sm sm:text-base text-foreground">{token.symbol}</h3>
+                          <Badge variant="outline" className="text-[10px] bg-card/50 border-border/50 hidden sm:inline-flex">
+                            {token.chain}
+                          </Badge>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{token.name}</p>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-bold text-xl text-foreground">{token.symbol}</h3>
-                        <Badge variant="outline" className="text-xs bg-card/60 border-white/10 backdrop-blur-sm">
-                          {token.chain}
-                        </Badge>
-                      </div>
-                      <p className="text-base text-muted-foreground/80 mb-1">{token.name}</p>
-                      <p className="text-sm text-muted-foreground/60">Wallet: {token.walletName}</p>
+
+                    {/* Token Value */}
+                    <div className="text-right shrink-0">
+                      <p className="font-semibold text-sm sm:text-base gradient-text">
+                        ${token.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        {parseFloat(token.balance).toFixed(4)} {token.symbol}
+                      </p>
                     </div>
                   </div>
-
-                  <div className="text-right space-y-1.5">
-                    <p className="font-bold text-2xl gradient-text">
-                      ${token.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-base text-muted-foreground/80 font-semibold">
-                      {parseFloat(token.balance).toFixed(4)} {token.symbol}
-                    </p>
-                    <p className="text-sm text-muted-foreground/60">
-                      @ ${token.priceUsd.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </Layout>
