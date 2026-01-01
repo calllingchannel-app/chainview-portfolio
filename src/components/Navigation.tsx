@@ -12,9 +12,9 @@ export function Navigation() {
 
   const navLinks = [
     { to: "/dashboard", label: "Dashboard" },
-    { to: "/portfolio", label: "Portfolio" },
-    { to: "/analytics", label: "Analytics" },
     { to: "/prices", label: "Live Prices" },
+    { to: "/predictor", label: "AI Predictor" },
+    { to: "/agent", label: "AI Agent" },
     { to: "/settings", label: "Settings" },
   ];
 
