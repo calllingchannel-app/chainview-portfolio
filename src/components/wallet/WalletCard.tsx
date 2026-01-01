@@ -18,7 +18,7 @@ export function WalletCard({ wallet }: WalletCardProps) {
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(wallet.address);
     toast({
-      title: "Address Copied",
+      title: "Address copied",
       description: "Wallet address copied to clipboard",
     });
   };
@@ -26,8 +26,8 @@ export function WalletCard({ wallet }: WalletCardProps) {
   const handleRemove = () => {
     removeWallet(wallet.id);
     toast({
-      title: "Wallet Removed",
-      description: "Wallet has been disconnected",
+      title: "Wallet removed",
+      description: "Wallet has been disconnected from your portfolio",
     });
   };
 
@@ -43,36 +43,35 @@ export function WalletCard({ wallet }: WalletCardProps) {
   };
 
   const activeBalances = wallet.balances.filter(token => parseFloat(token.balance) > 0);
+  const walletEmoji = wallet.type === 'evm' ? '🦊' : '👻';
 
   return (
-    <Card className="glass-card p-5 sm:p-6 group">
+    <Card className="glass-card p-5 sm:p-6 group transition-all duration-300">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-5">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-            <span className="text-lg">
-              {wallet.type === 'evm' ? '🦊' : '👻'}
-            </span>
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <span className="text-lg">{walletEmoji}</span>
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-foreground truncate">{wallet.name}</h3>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <p className="text-xs text-muted-foreground font-mono">{formatAddress(wallet.address)}</p>
-              <Button
-                variant="ghost"
-                size="sm"
+            <div className="flex items-center gap-2 mt-1">
+              <code className="text-xs text-muted-foreground font-mono bg-muted/30 px-2 py-0.5 rounded">
+                {formatAddress(wallet.address)}
+              </code>
+              <button
                 onClick={handleCopyAddress}
-                className="h-6 w-6 p-0 hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                className="text-muted-foreground hover:text-primary transition-colors p-1 -m-1"
               >
-                <Copy className="h-3 w-3" />
-              </Button>
+                <Copy className="h-3.5 w-3.5" />
+              </button>
               <a
                 href={getExplorerUrl(wallet.address, wallet.type)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors p-1 -m-1"
               >
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
@@ -82,21 +81,21 @@ export function WalletCard({ wallet }: WalletCardProps) {
           variant="ghost"
           size="sm"
           onClick={handleRemove}
-          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0"
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-9 w-9 p-0 shrink-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Stats */}
+      {/* Value Display */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <div className="p-3 rounded-lg bg-card/50 border border-border/30">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Chain</p>
-          <p className="font-medium text-sm text-foreground">{wallet.chain}</p>
+        <div className="p-3.5 rounded-xl bg-muted/20 border border-border/30">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Network</p>
+          <p className="font-semibold text-sm text-foreground capitalize">{wallet.chain}</p>
         </div>
-        <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Value</p>
-          <p className="font-semibold text-base gradient-text">
+        <div className="p-3.5 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Value</p>
+          <p className="font-bold text-lg gradient-text">
             ${wallet.totalUsdValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
@@ -108,46 +107,55 @@ export function WalletCard({ wallet }: WalletCardProps) {
           <Button
             variant="ghost"
             onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center justify-between px-0 h-auto py-0 hover:bg-transparent"
+            className="w-full flex items-center justify-between px-0 h-auto py-0 hover:bg-transparent group/expand"
           >
-            <span className="text-sm font-medium text-muted-foreground">
-              Assets ({activeBalances.length})
+            <span className="text-sm font-medium text-muted-foreground group-hover/expand:text-foreground transition-colors">
+              {activeBalances.length} Asset{activeBalances.length !== 1 ? 's' : ''}
             </span>
-            {expanded ? (
-              <ChevronUp className="h-4 w-4 text-primary" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
+            <div className="flex items-center gap-1 text-muted-foreground group-hover/expand:text-primary transition-colors">
+              <span className="text-xs">{expanded ? 'Hide' : 'Show'}</span>
+              {expanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </div>
           </Button>
 
-          <div className={`space-y-2 mt-3 ${expanded ? '' : 'max-h-28 overflow-hidden'}`}>
+          <div className={`space-y-2 mt-4 transition-all duration-300 ${expanded ? '' : 'max-h-24 overflow-hidden'}`}>
             {(expanded ? activeBalances : activeBalances.slice(0, 2)).map((token, idx) => (
               <div 
                 key={idx} 
-                className="flex justify-between items-center p-3 rounded-lg bg-card/40 border border-border/20"
+                className="flex justify-between items-center p-3 rounded-xl bg-card/40 border border-border/20 hover:border-border/40 transition-colors"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm text-foreground">{token.symbol}</p>
-                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-card/50 border-border/40">
+                    <span className="font-semibold text-sm text-foreground">{token.symbol}</span>
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-muted/30 border-border/40 text-muted-foreground uppercase">
                       {token.chain}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{token.name}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-0.5">{token.name}</p>
                 </div>
                 <div className="text-right shrink-0 ml-4">
-                  <p className="font-medium text-sm text-foreground">{parseFloat(token.balance).toFixed(4)}</p>
+                  <p className="font-semibold text-sm text-foreground">{parseFloat(token.balance).toFixed(4)}</p>
                   {token.priceUsd > 0 && (
                     <p className="text-xs text-primary font-medium">${token.usdValue.toFixed(2)}</p>
                   )}
                 </div>
               </div>
             ))}
+            
+            {!expanded && activeBalances.length > 2 && (
+              <p className="text-xs text-center text-muted-foreground pt-1">
+                +{activeBalances.length - 2} more assets
+              </p>
+            )}
           </div>
         </div>
       ) : (
         <div className="pt-4 border-t border-border/30 text-center py-6">
-          <div className="h-10 w-10 rounded-xl bg-muted/30 flex items-center justify-center mx-auto mb-2">
+          <div className="h-10 w-10 rounded-xl bg-muted/20 flex items-center justify-center mx-auto mb-2">
             <Coins className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="text-sm text-muted-foreground">No assets found</p>
