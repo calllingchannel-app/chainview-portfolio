@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Shield, Zap, Layers, Sparkles } from "lucide-react";
+import { Navigation } from "@/components/Navigation";
 
 const Landing = () => {
   return (
@@ -12,49 +13,11 @@ const Landing = () => {
         <div className="absolute bottom-0 left-0 w-[50%] h-[30vh] bg-gradient-to-tr from-primary/5 to-transparent blur-3xl" />
       </div>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-nav">
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="flex h-16 lg:h-20 items-center justify-between">
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="relative h-8 w-8 lg:h-9 lg:w-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-glow transition-transform duration-300 group-hover:scale-105">
-                <span className="text-base lg:text-lg font-bold text-primary-foreground">H</span>
-              </div>
-              <span className="text-xl lg:text-2xl font-bold gradient-text tracking-tight">HAVX</span>
-            </Link>
-            
-            <div className="hidden md:flex items-center gap-6 lg:gap-8">
-              {[
-                { to: "/dashboard", label: "Dashboard" },
-                { to: "/portfolio", label: "Portfolio" },
-                { to: "/analytics", label: "Analytics" },
-                { to: "/prices", label: "Live Prices" },
-                { to: "/settings", label: "Settings" },
-              ].map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-
-            <Link to="/dashboard">
-              <Button 
-                size="sm" 
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow font-medium px-4 lg:px-6"
-              >
-                Connect Wallet
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      {/* Global Navigation */}
+      <Navigation />
 
       {/* Hero Section */}
-      <section className="relative pt-28 lg:pt-36 pb-16 lg:pb-24 px-6">
+      <section className="relative pt-12 lg:pt-20 pb-16 lg:pb-24 px-6">
         <div className="container mx-auto text-center max-w-4xl">
           <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-sm animate-fade-in">
             <div className="flex -space-x-1">
