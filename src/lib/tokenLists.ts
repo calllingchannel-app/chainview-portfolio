@@ -54,16 +54,27 @@ export const EVM_TOKENS: Record<string, TokenInfo[]> = {
   ],
 };
 
-// Popular Solana SPL tokens
+// Popular Solana SPL tokens - expanded list for better coverage
 export const SOLANA_TOKENS: TokenInfo[] = [
   { address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', symbol: 'USDT', name: 'Tether USD', decimals: 6, coingeckoId: 'tether' },
   { address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', symbol: 'USDC', name: 'USD Coin', decimals: 6, coingeckoId: 'usd-coin' },
-  { address: 'So11111111111111111111111111111111111111112', symbol: 'SOL', name: 'Wrapped SOL', decimals: 9, coingeckoId: 'solana' },
+  { address: 'So11111111111111111111111111111111111111112', symbol: 'WSOL', name: 'Wrapped SOL', decimals: 9, coingeckoId: 'solana' },
   { address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', symbol: 'mSOL', name: 'Marinade SOL', decimals: 9, coingeckoId: 'marinade-staked-sol' },
   { address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', symbol: 'BONK', name: 'Bonk', decimals: 5, coingeckoId: 'bonk' },
+  { address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', symbol: 'JUP', name: 'Jupiter', decimals: 6, coingeckoId: 'jupiter-exchange-solana' },
+  { address: '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs', symbol: 'WETH', name: 'Wrapped Ether (Wormhole)', decimals: 8, coingeckoId: 'weth' },
+  { address: '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', symbol: 'stSOL', name: 'Lido Staked SOL', decimals: 9, coingeckoId: 'lido-staked-sol' },
+  { address: 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', symbol: 'PYTH', name: 'Pyth Network', decimals: 6, coingeckoId: 'pyth-network' },
+  { address: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE', symbol: 'ORCA', name: 'Orca', decimals: 6, coingeckoId: 'orca' },
+  { address: 'RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a', symbol: 'RLBB', name: 'Rollbit Coin', decimals: 2, coingeckoId: 'rollbit-coin' },
+  { address: 'rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof', symbol: 'RENDER', name: 'Render Token', decimals: 8, coingeckoId: 'render-token' },
+  { address: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', symbol: 'JTO', name: 'Jito', decimals: 9, coingeckoId: 'jito-governance-token' },
+  { address: 'WENWENvqqNya429ubCdR81ZmD69brwQaaBYY6p3LCpk', symbol: 'WEN', name: 'Wen', decimals: 5, coingeckoId: 'wen-4' },
+  { address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm', symbol: 'WIF', name: 'dogwifhat', decimals: 6, coingeckoId: 'dogwifcoin' },
+  { address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R', symbol: 'RAY', name: 'Raydium', decimals: 6, coingeckoId: 'raydium' },
 ];
 
-// Symbol to CoinGecko ID mapping
+// Symbol to CoinGecko ID mapping - expanded for Solana tokens
 export const NATIVE_COINGECKO_IDS: Record<string, string> = {
   ETH: 'ethereum',
   WETH: 'weth',
@@ -71,6 +82,7 @@ export const NATIVE_COINGECKO_IDS: Record<string, string> = {
   BNB: 'binancecoin',
   AVAX: 'avalanche-2',
   SOL: 'solana',
+  WSOL: 'solana',
   USDT: 'tether',
   USDC: 'usd-coin',
   DAI: 'dai',
@@ -79,6 +91,16 @@ export const NATIVE_COINGECKO_IDS: Record<string, string> = {
   AAVE: 'aave',
   UNI: 'uniswap',
   ARB: 'arbitrum',
+  mSOL: 'marinade-staked-sol',
+  stSOL: 'lido-staked-sol',
+  BONK: 'bonk',
+  JUP: 'jupiter-exchange-solana',
+  PYTH: 'pyth-network',
+  ORCA: 'orca',
+  WIF: 'dogwifcoin',
+  JTO: 'jito-governance-token',
+  RAY: 'raydium',
+  RENDER: 'render-token',
 };
 
 // Chain name to native token CoinGecko ID

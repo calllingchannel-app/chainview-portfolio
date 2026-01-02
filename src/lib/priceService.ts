@@ -8,9 +8,9 @@ interface CoinGeckoPrice {
   };
 }
 
-// Price cache with 30 second TTL
+// Price cache with 15 second TTL for more real-time data
 const priceCache = new Map<string, { price: number; timestamp: number }>();
-const CACHE_TTL = 30000; // 30 seconds
+const CACHE_TTL = 15000; // 15 seconds - shorter for real-time accuracy
 
 // Fetch prices from CoinGecko by IDs
 export async function fetchPricesByIds(coingeckoIds: string[]): Promise<Record<string, number>> {

@@ -16,7 +16,7 @@ const NATIVE_TOKEN_IDS: Record<string, string> = {
   solana: 'solana',
 };
 
-// Map token symbols to CoinGecko IDs
+// Map token symbols to CoinGecko IDs - expanded for Solana
 const SYMBOL_TO_COINGECKO: Record<string, string> = {
   ETH: 'ethereum',
   WETH: 'weth',
@@ -24,6 +24,7 @@ const SYMBOL_TO_COINGECKO: Record<string, string> = {
   BNB: 'binancecoin',
   AVAX: 'avalanche-2',
   SOL: 'solana',
+  WSOL: 'solana',
   USDT: 'tether',
   USDC: 'usd-coin',
   DAI: 'dai',
@@ -34,7 +35,15 @@ const SYMBOL_TO_COINGECKO: Record<string, string> = {
   ARB: 'arbitrum',
   OP: 'optimism',
   mSOL: 'marinade-staked-sol',
+  stSOL: 'lido-staked-sol',
   BONK: 'bonk',
+  JUP: 'jupiter-exchange-solana',
+  PYTH: 'pyth-network',
+  ORCA: 'orca',
+  WIF: 'dogwifcoin',
+  JTO: 'jito-governance-token',
+  RAY: 'raydium',
+  RENDER: 'render-token',
 };
 
 export function useBalanceRefresh(intervalMs: number = 15000) {
