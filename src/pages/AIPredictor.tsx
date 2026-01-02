@@ -38,6 +38,28 @@ const AIPredictor = () => {
         );
 
         const data = await response.json();
+        
+        if (!response.ok) {
+          console.error("API error:", response.status, data);
+          toast({
+            title: "Analysis Error",
+            description: data.analysis || "Failed to analyze the chart. Please try again.",
+            variant: "destructive",
+          });
+          setPrediction(null);
+          return;
+        }
+
+        if (data.error && data.symbol === 'ERROR') {
+          toast({
+            title: "Analysis Failed",
+            description: data.analysis || "Could not analyze the chart.",
+            variant: "destructive",
+          });
+          setPrediction(null);
+          return;
+        }
+
         setPrediction(data);
 
         toast({
@@ -47,10 +69,11 @@ const AIPredictor = () => {
       } catch (error) {
         console.error("Error analyzing chart:", error);
         toast({
-          title: "Analysis Failed",
-          description: "Failed to analyze the chart. Please try again.",
+          title: "Connection Error",
+          description: "Failed to connect to the analysis service. Please try again.",
           variant: "destructive",
         });
+        setPrediction(null);
       } finally {
         setIsAnalyzing(false);
       }

@@ -1,0 +1,7 @@
+project_id = "kaiwohcsgadzgrytmwba"
+
+[functions.trading-agent]
+verify_jwt = false
+
+[functions.analyze-chart]
+verify_jwt = false

@@ -83,15 +83,29 @@ const AIAgent = () => {
       );
 
       const data = await response.json();
+      
+      if (!response.ok) {
+        console.error("API error:", response.status, data);
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: data.response || "I encountered an error. Please try again."
+        }]);
+        return;
+      }
+
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: data.response
+        content: data.response || "I received your message but couldn't generate a response."
       }]);
     } catch (error) {
       console.error("Error sending message:", error);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: "I'm having trouble connecting to the server. Please check your connection and try again."
+      }]);
       toast({
-        title: "Error",
-        description: "Failed to get response from AI agent. Please try again.",
+        title: "Connection Error",
+        description: "Failed to connect to the AI service.",
         variant: "destructive"
       });
     } finally {
