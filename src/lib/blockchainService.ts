@@ -77,13 +77,13 @@ function createClient(chainName: keyof typeof CHAINS, rpcIndex: number = 0) {
   });
 }
 
-// Solana RPC with fallbacks
+// Solana RPC with fallbacks - prioritize Helius for reliability
 // For reliable production use, set VITE_HELIUS_RPC_URL with your own Helius API key
 const SOLANA_RPC_URLS = [
   import.meta.env.VITE_HELIUS_RPC_URL,
   import.meta.env.VITE_SOLANA_RPC_URL,
-  'https://solana-mainnet.g.alchemy.com/v2/demo', // Alchemy demo
   'https://rpc.ankr.com/solana',
+  'https://solana-mainnet.g.alchemy.com/v2/demo',
   'https://api.mainnet-beta.solana.com',
 ].filter(Boolean) as string[];
 
@@ -94,30 +94,32 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([promise, timeout]);
 }
 
-// Cache the working Solana connection
+// Cache for Solana connection - shorter TTL for more accurate data
 let cachedSolanaConnection: Connection | null = null;
 let cachedSolanaRpcUrl: string | null = null;
 let lastConnectionAttempt = 0;
+const CONNECTION_CACHE_TTL = 30000; // 30 seconds - shorter for more real-time data
 
-async function getSolanaConnection(): Promise<Connection> {
+async function getSolanaConnection(forceNew: boolean = false): Promise<Connection> {
   const now = Date.now();
   
-  // Reuse cached connection if available and recent (60 seconds)
-  if (cachedSolanaConnection && cachedSolanaRpcUrl && (now - lastConnectionAttempt < 60000)) {
+  // Reuse cached connection if available and recent
+  if (!forceNew && cachedSolanaConnection && cachedSolanaRpcUrl && (now - lastConnectionAttempt < CONNECTION_CACHE_TTL)) {
     return cachedSolanaConnection;
   }
 
+  // Try each RPC in order
   for (const url of SOLANA_RPC_URLS) {
     try {
       const conn = new Connection(url, {
         commitment: 'confirmed',
-        confirmTransactionInitialTimeout: 20000,
+        confirmTransactionInitialTimeout: 15000,
         fetch: (url, options) => {
           return fetch(url, { ...options, cache: 'no-store' });
         },
       });
-      // Test the connection with longer timeout
-      await withTimeout(conn.getSlot(), 8000);
+      // Test the connection
+      await withTimeout(conn.getSlot(), 6000);
       console.log(`✅ Solana RPC connected: ${url.substring(0, 50)}...`);
       cachedSolanaConnection = conn;
       cachedSolanaRpcUrl = url;
@@ -128,6 +130,13 @@ async function getSolanaConnection(): Promise<Connection> {
     }
   }
   throw new Error('All Solana RPCs failed. For reliable Solana support, add VITE_HELIUS_RPC_URL');
+}
+
+// Force refresh connection on next call
+function resetSolanaConnection() {
+  cachedSolanaConnection = null;
+  cachedSolanaRpcUrl = null;
+  lastConnectionAttempt = 0;
 }
 
 // Native token metadata per chain
@@ -274,24 +283,42 @@ export async function getAllEvmBalances(
   return balances;
 }
 
-// Get Solana native balance
-export async function getSolanaNative(address: string): Promise<number> {
+// Get Solana native balance with retry logic
+export async function getSolanaNative(address: string, retryCount: number = 0): Promise<number> {
+  const MAX_RETRIES = 2;
+  
   try {
     const publicKey = new PublicKey(address);
-    const conn = await getSolanaConnection();
-    const balance = await withTimeout(conn.getBalance(publicKey), 10000);
-    console.log(`✅ SOL balance: ${balance / LAMPORTS_PER_SOL} SOL`);
+    const conn = await getSolanaConnection(retryCount > 0); // Force new connection on retry
+    
+    const balance = await withTimeout(conn.getBalance(publicKey), 8000);
+    
+    // Validate balance - sometimes RPC returns 0 on first call
+    if (balance === 0 && retryCount === 0) {
+      console.log('⚠️ SOL balance returned 0, retrying with fresh connection...');
+      resetSolanaConnection();
+      return getSolanaNative(address, 1);
+    }
+    
+    const solAmount = balance / LAMPORTS_PER_SOL;
+    console.log(`✅ SOL balance: ${solAmount.toFixed(9)} SOL (${balance} lamports)`);
     return balance;
   } catch (error: any) {
     console.error('Failed to get SOL balance:', error.message);
-    // Reset cache to try different RPC next time
-    cachedSolanaConnection = null;
-    cachedSolanaRpcUrl = null;
+    
+    // Retry with fresh connection
+    if (retryCount < MAX_RETRIES) {
+      console.log(`🔄 Retrying SOL balance fetch (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+      resetSolanaConnection();
+      return getSolanaNative(address, retryCount + 1);
+    }
+    
+    resetSolanaConnection();
     return 0;
   }
 }
 
-// Get Solana SPL token balances
+// Get Solana SPL token balances with improved accuracy
 export async function getSolanaSPLBalances(
   address: string,
   tokens: TokenInfo[]
@@ -306,40 +333,54 @@ export async function getSolanaSPLBalances(
       conn.getParsedTokenAccountsByOwner(publicKey, {
         programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
       }),
-      12000
+      10000
     );
 
-    console.log(`Found ${tokenAccounts.value.length} token accounts`);
+    console.log(`📊 Found ${tokenAccounts.value.length} SPL token accounts`);
 
     tokenAccounts.value.forEach((accountInfo) => {
-      const parsedInfo = accountInfo.account.data.parsed.info;
-      const mint = parsedInfo.mint;
-      const decimals = parsedInfo.tokenAmount.decimals;
-      const uiAmount = parsedInfo.tokenAmount.uiAmount;
+      try {
+        const parsedInfo = accountInfo.account.data.parsed.info;
+        const mint = parsedInfo.mint;
+        const decimals = parsedInfo.tokenAmount.decimals;
+        
+        // Use uiAmountString for better precision, fallback to uiAmount
+        const uiAmountStr = parsedInfo.tokenAmount.uiAmountString;
+        const uiAmount = uiAmountStr ? parseFloat(uiAmountStr) : parsedInfo.tokenAmount.uiAmount;
+        
+        // Also get raw amount for validation
+        const rawAmount = parsedInfo.tokenAmount.amount;
 
-      // Find token in our list
-      const tokenInfo = tokens.find((t) => t.address === mint);
+        // Find token in our list
+        const tokenInfo = tokens.find((t) => t.address === mint);
 
-      if (uiAmount > 0) {
-        balances.push({
-          symbol: tokenInfo?.symbol || 'UNKNOWN',
-          name: tokenInfo?.name || mint.slice(0, 8) + '...',
-          balance: uiAmount.toString(),
-          decimals,
-          usdValue: 0,
-          priceUsd: 0,
-          chain: 'solana',
-          contractAddress: mint,
-        });
+        // Only include tokens with actual balance
+        if (uiAmount > 0 || (rawAmount && BigInt(rawAmount) > 0n)) {
+          const finalAmount = uiAmount > 0 ? uiAmount : Number(BigInt(rawAmount)) / Math.pow(10, decimals);
+          
+          if (finalAmount > 0) {
+            balances.push({
+              symbol: tokenInfo?.symbol || 'UNKNOWN',
+              name: tokenInfo?.name || `Token ${mint.slice(0, 8)}...`,
+              balance: finalAmount.toString(),
+              decimals,
+              usdValue: 0,
+              priceUsd: 0,
+              chain: 'solana',
+              contractAddress: mint,
+            });
+            console.log(`  ✓ ${tokenInfo?.symbol || mint.slice(0, 8)}: ${finalAmount}`);
+          }
+        }
+      } catch (parseError) {
+        console.warn('Failed to parse token account:', parseError);
       }
     });
 
-    console.log(`✅ Solana SPL tokens: ${balances.length} found`);
+    console.log(`✅ Solana SPL tokens with balance: ${balances.length}`);
   } catch (error: any) {
     console.error('Failed to get Solana SPL balances:', error.message);
-    // Reset cache to try different RPC next time
-    cachedSolanaConnection = null;
-    cachedSolanaRpcUrl = null;
+    resetSolanaConnection();
   }
 
   return balances;

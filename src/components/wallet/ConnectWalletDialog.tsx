@@ -148,6 +148,7 @@ const SYMBOL_TO_COINGECKO: Record<string, string> = {
   BNB: 'binancecoin',
   AVAX: 'avalanche-2',
   SOL: 'solana',
+  WSOL: 'solana',
   USDT: 'tether',
   USDC: 'usd-coin',
   DAI: 'dai',
@@ -156,6 +157,16 @@ const SYMBOL_TO_COINGECKO: Record<string, string> = {
   AAVE: 'aave',
   UNI: 'uniswap',
   ARB: 'arbitrum',
+  mSOL: 'marinade-staked-sol',
+  stSOL: 'lido-staked-sol',
+  BONK: 'bonk',
+  JUP: 'jupiter-exchange-solana',
+  PYTH: 'pyth-network',
+  ORCA: 'orca',
+  WIF: 'dogwifcoin',
+  JTO: 'jito-governance-token',
+  RAY: 'raydium',
+  RENDER: 'render-token',
 };
 
 export function ConnectWalletDialog({ open, onOpenChange }: ConnectWalletDialogProps) {
