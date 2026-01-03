@@ -46,33 +46,38 @@ const SYMBOL_TO_COINGECKO: Record<string, string> = {
   RENDER: 'render-token',
 };
 
-export function useBalanceRefresh(intervalMs: number = 15000) {
+export function useBalanceRefresh(intervalMs: number = 12000) {
   const { connectedWallets, updateWalletBalances, setTotalPortfolioUSD, setLastUpdated, setLoading } = useWalletStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
   const isVisibleRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const refreshAllWallets = useCallback(async () => {
     // Only refresh if page is visible and not already refreshing
     if (connectedWallets.length === 0 || isRefreshingRef.current || !isVisibleRef.current) return;
     
+    // Cancel any previous refresh
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    
     isRefreshingRef.current = true;
     setLoading(true);
+    const startTime = Date.now();
     console.log('🔄 Refreshing balances for', connectedWallets.length, 'wallet(s)...');
 
     try {
-      // Refresh each wallet in parallel
+      // Refresh all wallets in parallel for speed
       const refreshPromises = connectedWallets.map(async (wallet) => {
         try {
-          console.log(`📡 Fetching balances for ${wallet.name} (${wallet.type})...`);
           const balances = await getAllChainBalances(wallet.address, wallet.type);
-          console.log(`✅ Got ${balances.length} token(s) for ${wallet.name}`);
-
-          // Collect all unique CoinGecko IDs for price fetching
+          
+          // Collect all unique CoinGecko IDs
           const coingeckoIds = new Set<string>();
           
           balances.forEach((token) => {
-            // Native tokens - use chain-based lookup
             if (!token.contractAddress) {
               const nativeId = NATIVE_TOKEN_IDS[token.chain];
               if (nativeId) coingeckoIds.add(nativeId);
@@ -85,23 +90,16 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
               if (info?.coingeckoId) coingeckoIds.add(info.coingeckoId);
             }
             
-            // Also try symbol-based lookup as fallback
             const symbolId = SYMBOL_TO_COINGECKO[token.symbol.toUpperCase()];
             if (symbolId) coingeckoIds.add(symbolId);
           });
 
-          let prices: Record<string, number> = {};
-          if (coingeckoIds.size > 0) {
-            console.log(`💰 Fetching prices for ${coingeckoIds.size} tokens...`);
-            prices = await fetchPricesByIds(Array.from(coingeckoIds));
-            console.log('📊 Prices fetched:', Object.keys(prices).length);
-          }
+          const prices = coingeckoIds.size > 0 ? await fetchPricesByIds(Array.from(coingeckoIds)) : {};
 
           // Update balances with USD values
           const balancesWithPrices = balances.map((token) => {
             let priceId: string | undefined;
             
-            // Native tokens
             if (!token.contractAddress) {
               priceId = NATIVE_TOKEN_IDS[token.chain];
             } else if (token.chain === 'solana') {
@@ -113,7 +111,6 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
               priceId = info?.coingeckoId;
             }
             
-            // Fallback to symbol lookup
             if (!priceId || !prices[priceId]) {
               priceId = SYMBOL_TO_COINGECKO[token.symbol.toUpperCase()];
             }
@@ -138,13 +135,14 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
 
       await Promise.allSettled(refreshPromises);
 
-      // Recalculate total portfolio value from fresh state
+      // Recalculate total portfolio value
       const store = useWalletStore.getState();
       const totalUSD = store.connectedWallets.reduce((sum, w) => sum + w.totalUsdValue, 0);
       setTotalPortfolioUSD(totalUSD);
       setLastUpdated(Date.now());
 
-      console.log('✅ Balance refresh complete. Total portfolio: $' + totalUSD.toFixed(2));
+      const elapsed = Date.now() - startTime;
+      console.log(`✅ Balance refresh complete in ${elapsed}ms. Total: $${totalUSD.toFixed(2)}`);
     } catch (error) {
       console.error('❌ Failed to refresh balances:', error);
     } finally {
@@ -157,7 +155,6 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
   useEffect(() => {
     const handleVisibilityChange = () => {
       isVisibleRef.current = document.visibilityState === 'visible';
-      console.log(`👁️ Page visibility: ${isVisibleRef.current ? 'visible' : 'hidden'}`);
       
       // Refresh immediately when becoming visible
       if (isVisibleRef.current && connectedWallets.length > 0) {
@@ -181,7 +178,7 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
     // Refresh immediately on mount/wallet change
     refreshAllWallets();
 
-    // Set up interval for auto-refresh
+    // Set up interval for auto-refresh (12 seconds default)
     intervalRef.current = setInterval(refreshAllWallets, intervalMs);
 
     // Cleanup on unmount
@@ -189,6 +186,9 @@ export function useBalanceRefresh(intervalMs: number = 15000) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
   }, [connectedWallets.length, intervalMs, refreshAllWallets]);

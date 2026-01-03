@@ -2,29 +2,23 @@ import { Layout } from "@/components/Layout";
 import { useWalletStore } from "@/stores/walletStore";
 import { Card } from "@/components/ui/card";
 import { WalletCard } from "@/components/wallet/WalletCard";
-import { Wallet, TrendingUp, TrendingDown, Layers, Plus, RefreshCw } from "lucide-react";
+import { Wallet, TrendingUp, Layers, Plus, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useBalanceRefresh } from "@/hooks/useBalanceRefresh";
 import { ConnectWalletDialog } from "@/components/wallet/ConnectWalletDialog";
 import { Button } from "@/components/ui/button";
+import { PortfolioPnL } from "@/components/dashboard/PortfolioPnL";
 
 export default function Dashboard() {
   const { connectedWallets, totalPortfolioUSD, lastUpdated } = useWalletStore();
-  const { refreshAllWallets } = useBalanceRefresh(30000);
+  const { refreshAllWallets } = useBalanceRefresh(12000); // 12 second refresh
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
-  const [portfolioChange24h, setPortfolioChange24h] = useState(0);
 
   useEffect(() => {
     const total = connectedWallets.reduce((sum, wallet) => sum + wallet.totalUsdValue, 0);
     useWalletStore.getState().setTotalPortfolioUSD(total);
   }, [connectedWallets]);
-
-  useEffect(() => {
-    if (totalPortfolioUSD > 0) {
-      setPortfolioChange24h(((Math.random() - 0.3) * 10));
-    }
-  }, [totalPortfolioUSD]);
 
   const totalAssets = connectedWallets.reduce(
     (sum, w) => sum + w.balances.filter(b => parseFloat(b.balance) > 0).length,
@@ -78,7 +72,7 @@ export default function Dashboard() {
           <Card className="glass-card p-6 sm:p-8 mb-6 animate-slide-up overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
             <div className="relative">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Portfolio Value</p>
                   {lastUpdated && (
@@ -87,29 +81,20 @@ export default function Dashboard() {
                     </p>
                   )}
                 </div>
-                
-                {portfolioChange24h !== 0 && (
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
-                    portfolioChange24h >= 0 
-                      ? 'bg-success/10 text-success border border-success/20' 
-                      : 'bg-destructive/10 text-destructive border border-destructive/20'
-                  }`}>
-                    {portfolioChange24h >= 0 ? (
-                      <TrendingUp className="h-4 w-4" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4" />
-                    )}
-                    <span>{portfolioChange24h >= 0 ? '+' : ''}{portfolioChange24h.toFixed(2)}%</span>
-                  </div>
-                )}
               </div>
               
-              <h3 className="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text tracking-tight mb-2">
+              <h3 className="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text tracking-tight">
                 ${totalPortfolioUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
-              <p className="text-sm text-muted-foreground">24h change</p>
             </div>
           </Card>
+
+          {/* P&L Analytics */}
+          {connectedWallets.length > 0 && (
+            <div className="mb-6">
+              <PortfolioPnL />
+            </div>
+          )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

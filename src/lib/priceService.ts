@@ -8,11 +8,14 @@ interface CoinGeckoPrice {
   };
 }
 
-// Price cache with 15 second TTL for more real-time data
+// Price cache with 10 second TTL for real-time accuracy
 const priceCache = new Map<string, { price: number; timestamp: number }>();
-const CACHE_TTL = 15000; // 15 seconds - shorter for real-time accuracy
+const CACHE_TTL = 10000; // 10 seconds - faster refresh for real-time data
 
-// Fetch prices from CoinGecko by IDs
+// Request deduplication to prevent duplicate API calls
+const pendingRequests = new Map<string, Promise<Record<string, number>>>();
+
+// Fetch prices from CoinGecko by IDs with deduplication
 export async function fetchPricesByIds(coingeckoIds: string[]): Promise<Record<string, number>> {
   if (coingeckoIds.length === 0) return {};
 
@@ -30,8 +33,23 @@ export async function fetchPricesByIds(coingeckoIds: string[]): Promise<Record<s
     }
   });
 
-  // Fetch uncached prices
-  if (uncachedIds.length > 0) {
+  if (uncachedIds.length === 0) return prices;
+
+  // Create a unique key for this request
+  const requestKey = uncachedIds.sort().join(',');
+
+  // Check if there's already a pending request for these IDs
+  const pending = pendingRequests.get(requestKey);
+  if (pending) {
+    console.log(`⏳ Waiting for pending price request...`);
+    const fetchedPrices = await pending;
+    return { ...prices, ...fetchedPrices };
+  }
+
+  // Create new request
+  const fetchPromise = (async (): Promise<Record<string, number>> => {
+    const fetchedPrices: Record<string, number> = {};
+    
     try {
       console.log(`💰 Fetching prices for: ${uncachedIds.join(', ')}`);
       const ids = uncachedIds.join(',');
@@ -39,34 +57,44 @@ export async function fetchPricesByIds(coingeckoIds: string[]): Promise<Record<s
       const response = await axios.get<CoinGeckoPrice>(
         `${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd`,
         { 
-          timeout: 10000,
+          timeout: 8000,
           headers: {
             'Accept': 'application/json',
           }
         }
       );
 
+      const fetchTime = Date.now();
       uncachedIds.forEach((id) => {
         const price = response.data[id]?.usd || 0;
-        prices[id] = price;
-        priceCache.set(id, { price, timestamp: now });
-        if (price > 0) {
-          console.log(`  ${id}: $${price}`);
-        }
+        fetchedPrices[id] = price;
+        priceCache.set(id, { price, timestamp: fetchTime });
       });
+      
+      console.log(`✅ Fetched ${Object.keys(fetchedPrices).length} prices`);
     } catch (error: any) {
       console.error('CoinGecko API error:', error.message);
-      
-      // Set prices to 0 for failed fetches
+      // Return 0 for failed fetches
       uncachedIds.forEach((id) => {
-        if (prices[id] === undefined) {
-          prices[id] = 0;
+        if (fetchedPrices[id] === undefined) {
+          fetchedPrices[id] = 0;
         }
       });
     }
-  }
+    
+    return fetchedPrices;
+  })();
 
-  return prices;
+  // Store the pending request
+  pendingRequests.set(requestKey, fetchPromise);
+
+  try {
+    const fetchedPrices = await fetchPromise;
+    return { ...prices, ...fetchedPrices };
+  } finally {
+    // Clean up pending request
+    pendingRequests.delete(requestKey);
+  }
 }
 
 // Fetch top cryptos by market cap
