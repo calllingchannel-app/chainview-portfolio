@@ -78,12 +78,10 @@ function createClient(chainName: keyof typeof CHAINS, rpcIndex: number = 0) {
 }
 
 // Solana RPC with fallbacks - prioritize Helius for reliability
-// For reliable production use, set VITE_HELIUS_RPC_URL with your own Helius API key
 const SOLANA_RPC_URLS = [
   import.meta.env.VITE_HELIUS_RPC_URL,
   import.meta.env.VITE_SOLANA_RPC_URL,
   'https://rpc.ankr.com/solana',
-  'https://solana-mainnet.g.alchemy.com/v2/demo',
   'https://api.mainnet-beta.solana.com',
 ].filter(Boolean) as string[];
 
@@ -98,7 +96,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 let cachedSolanaConnection: Connection | null = null;
 let cachedSolanaRpcUrl: string | null = null;
 let lastConnectionAttempt = 0;
-const CONNECTION_CACHE_TTL = 30000; // 30 seconds - shorter for more real-time data
+const CONNECTION_CACHE_TTL = 20000; // 20 seconds
 
 async function getSolanaConnection(forceNew: boolean = false): Promise<Connection> {
   const now = Date.now();
@@ -113,26 +111,25 @@ async function getSolanaConnection(forceNew: boolean = false): Promise<Connectio
     try {
       const conn = new Connection(url, {
         commitment: 'confirmed',
-        confirmTransactionInitialTimeout: 15000,
+        confirmTransactionInitialTimeout: 10000,
         fetch: (url, options) => {
           return fetch(url, { ...options, cache: 'no-store' });
         },
       });
-      // Test the connection
-      await withTimeout(conn.getSlot(), 6000);
-      console.log(`✅ Solana RPC connected: ${url.substring(0, 50)}...`);
+      // Quick connection test
+      await withTimeout(conn.getSlot(), 5000);
+      console.log(`✅ Solana RPC: ${url.substring(0, 40)}...`);
       cachedSolanaConnection = conn;
       cachedSolanaRpcUrl = url;
       lastConnectionAttempt = now;
       return conn;
     } catch (err: any) {
-      console.warn(`Solana RPC failed: ${url.substring(0, 50)}...`, err.message);
+      console.warn(`Solana RPC failed: ${url.substring(0, 40)}...`);
     }
   }
-  throw new Error('All Solana RPCs failed. For reliable Solana support, add VITE_HELIUS_RPC_URL');
+  throw new Error('All Solana RPCs failed');
 }
 
-// Force refresh connection on next call
 function resetSolanaConnection() {
   cachedSolanaConnection = null;
   cachedSolanaRpcUrl = null;
