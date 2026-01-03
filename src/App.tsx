@@ -7,8 +7,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import LivePrices from "./pages/LivePrices";
 import Settings from "./pages/Settings";
-import AIPredictor from "./pages/AIPredictor";
-import AIAgent from "./pages/AIAgent";
+import AIInsights from "./pages/AIInsights";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -21,8 +20,7 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/prices" element={<LivePrices />} />
-          <Route path="/predictor" element={<AIPredictor />} />
-          <Route path="/agent" element={<AIAgent />} />
+          <Route path="/ai-insights" element={<AIInsights />} />
           <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
