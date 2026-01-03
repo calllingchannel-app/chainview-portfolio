@@ -13,8 +13,7 @@ export function Navigation() {
   const navLinks = [
     { to: "/dashboard", label: "Dashboard" },
     { to: "/prices", label: "Live Prices" },
-    { to: "/predictor", label: "AI Predictor" },
-    { to: "/agent", label: "AI Agent" },
+    { to: "/ai-insights", label: "AI Insights" },
     { to: "/settings", label: "Settings" },
   ];
 
