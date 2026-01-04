@@ -5,6 +5,7 @@ import { useWalletStore } from '@/stores/walletStore';
 import { calculatePortfolioPnL, formatPnL, type PortfolioPnL as PnLType, type TimePeriod } from '@/lib/priceHistoryService';
 import { EVM_TOKENS, SOLANA_TOKENS } from '@/lib/tokenLists';
 
+// Map chain names to their native token CoinGecko IDs
 const NATIVE_TOKEN_IDS: Record<string, string> = {
   ethereum: 'ethereum',
   polygon: 'matic-network',
@@ -47,25 +48,14 @@ interface PnLCardProps {
 
 function PnLCard({ period, label, pnl, isLoading }: PnLCardProps) {
   return (
-    <Card className="glass-card p-5 relative overflow-hidden group">
-      <div className={`absolute inset-0 bg-gradient-to-br ${pnl?.isPositive ? 'from-success/5' : pnl ? 'from-destructive/5' : 'from-primary/5'} via-transparent to-transparent transition-all`} />
+    <Card className="glass-card p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
       <div className="relative">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-              {label}
-            </span>
-          </div>
-          {pnl && !isLoading && (
-            <div className={`h-6 w-6 rounded-lg flex items-center justify-center ${pnl.isPositive ? 'bg-success/15' : 'bg-destructive/15'}`}>
-              {pnl.isPositive ? (
-                <TrendingUp className="h-3.5 w-3.5 text-success" />
-              ) : (
-                <TrendingDown className="h-3.5 w-3.5 text-destructive" />
-              )}
-            </div>
-          )}
+        <div className="flex items-center gap-2 mb-2">
+          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {label}
+          </span>
         </div>
         
         {isLoading ? (
@@ -75,10 +65,15 @@ function PnLCard({ period, label, pnl, isLoading }: PnLCardProps) {
           </div>
         ) : pnl ? (
           <div className="space-y-1">
-            <p className={`text-2xl font-display font-bold ${pnl.isPositive ? 'text-success' : 'text-destructive'} tabular-nums`}>
-              {pnl.percentStr}
-            </p>
-            <p className={`text-sm font-medium font-mono tabular-nums ${pnl.isPositive ? 'text-success/70' : 'text-destructive/70'}`}>
+            <div className={`flex items-center gap-1.5 ${pnl.isPositive ? 'text-success' : 'text-destructive'}`}>
+              {pnl.isPositive ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+              <span className="text-lg font-bold">{pnl.percentStr}</span>
+            </div>
+            <p className={`text-sm font-medium ${pnl.isPositive ? 'text-success/80' : 'text-destructive/80'}`}>
               {pnl.absoluteStr}
             </p>
           </div>
@@ -105,6 +100,7 @@ export function PortfolioPnL() {
     setIsLoading(true);
 
     try {
+      // Build holdings array with coingecko IDs
       const holdings: Array<{
         coingeckoId: string;
         balance: number;
@@ -115,6 +111,7 @@ export function PortfolioPnL() {
         wallet.balances.forEach((token) => {
           let coingeckoId: string | undefined;
 
+          // Native tokens
           if (!token.contractAddress) {
             coingeckoId = NATIVE_TOKEN_IDS[token.chain];
           } else if (token.chain === 'solana') {
@@ -128,6 +125,7 @@ export function PortfolioPnL() {
             coingeckoId = info?.coingeckoId;
           }
 
+          // Fallback to symbol lookup
           if (!coingeckoId) {
             coingeckoId = SYMBOL_TO_COINGECKO[token.symbol.toUpperCase()];
           }
@@ -150,6 +148,7 @@ export function PortfolioPnL() {
       const pnl = await calculatePortfolioPnL(holdings);
       setPnlData(pnl);
       setLastCalculated(Date.now());
+      console.log('📊 P&L calculated:', pnl);
     } catch (error) {
       console.error('Failed to calculate P&L:', error);
     } finally {
@@ -157,9 +156,11 @@ export function PortfolioPnL() {
     }
   }, [connectedWallets]);
 
+  // Calculate P&L when wallets change or every 2 minutes
   useEffect(() => {
     calculatePnL();
-    const interval = setInterval(calculatePnL, 2 * 60 * 1000);
+    
+    const interval = setInterval(calculatePnL, 2 * 60 * 1000); // 2 minutes
     return () => clearInterval(interval);
   }, [calculatePnL, totalPortfolioUSD]);
 
@@ -174,12 +175,12 @@ export function PortfolioPnL() {
   return (
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-display font-semibold text-foreground uppercase tracking-widest">
-          Performance
+        <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+          Portfolio Performance
         </h2>
         {lastCalculated && (
-          <span className="text-xs text-muted-foreground font-mono">
-            {new Date(lastCalculated).toLocaleTimeString()}
+          <span className="text-xs text-muted-foreground">
+            Updated {new Date(lastCalculated).toLocaleTimeString()}
           </span>
         )}
       </div>

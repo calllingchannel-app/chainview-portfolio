@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink } from "./NavLink";
 import { Button } from "./ui/button";
-import { Wallet, Menu, X, LayoutDashboard, TrendingUp, Brain, Settings } from "lucide-react";
+import { Wallet, Menu, X, ChevronDown } from "lucide-react";
 import { ConnectWalletDialog } from "./wallet/ConnectWalletDialog";
 import { useWalletStore } from "@/stores/walletStore";
 
@@ -11,40 +11,35 @@ export function Navigation() {
   const { connectedWallets, totalPortfolioUSD } = useWalletStore();
 
   const navLinks = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/prices", label: "Markets", icon: TrendingUp },
-    { to: "/ai-insights", label: "AI Insights", icon: Brain },
-    { to: "/settings", label: "Settings", icon: Settings },
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/prices", label: "Live Prices" },
+    { to: "/ai-insights", label: "AI Insights" },
+    { to: "/settings", label: "Settings" },
   ];
 
   return (
     <>
       <nav className="glass-nav sticky top-0 z-50 w-full">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 lg:h-18 items-center justify-between">
+          <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <NavLink to="/" className="flex items-center gap-3 group">
-              <div className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-glow transition-all duration-300 group-hover:shadow-glow-lg group-hover:scale-105 overflow-hidden">
-                <span className="text-base font-bold text-white tracking-tight relative z-10">H</span>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            <NavLink to="/dashboard" className="flex items-center gap-2.5 group">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-glow transition-all duration-300 group-hover:shadow-glow-lg group-hover:scale-105">
+                <span className="text-sm font-bold text-white tracking-tight">H</span>
               </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="text-lg font-bold tracking-tight text-foreground leading-none">HAVX</span>
-                <span className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase">Portfolio</span>
-              </div>
+              <span className="text-xl font-bold tracking-tight text-foreground hidden sm:inline">HAVX</span>
             </NavLink>
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center">
-              <div className="flex items-center bg-muted/40 rounded-xl p-1.5 gap-1">
+              <div className="flex items-center bg-muted/30 rounded-xl p-1">
                 {navLinks.map((link) => (
                   <NavLink
                     key={link.to}
                     to={link.to}
-                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground px-4 py-2.5 rounded-lg transition-all duration-200 hover:bg-muted/60"
-                    activeClassName="text-foreground bg-background shadow-sm border border-border/50"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground px-4 py-2 rounded-lg transition-all duration-200 hover:bg-muted/50"
+                    activeClassName="text-foreground bg-background shadow-sm"
                   >
-                    <link.icon className="h-4 w-4" />
                     {link.label}
                   </NavLink>
                 ))}
@@ -55,13 +50,11 @@ export function Navigation() {
             <div className="flex items-center gap-3">
               {/* Balance Display */}
               {connectedWallets.length > 0 && (
-                <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 rounded-xl bg-muted/40 border border-border/50">
-                  <div className="relative">
-                    <div className="h-2.5 w-2.5 rounded-full bg-success status-dot-success" />
-                  </div>
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/30 border border-border/40">
+                  <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
                   <div className="text-right">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Portfolio</p>
-                    <p className="text-sm font-bold text-foreground font-mono tabular-nums">
+                    <p className="text-sm font-bold text-foreground">
                       ${totalPortfolioUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -101,11 +94,10 @@ export function Navigation() {
                   <NavLink
                     key={link.to}
                     to={link.to}
-                    className="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl px-4 py-3.5 transition-all"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl px-4 py-3 transition-all"
                     activeClassName="text-foreground bg-muted/50"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <link.icon className="h-4 w-4" />
                     {link.label}
                   </NavLink>
                 ))}
